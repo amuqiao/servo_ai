@@ -31,7 +31,6 @@ services:
 
   redis:
     image: redis:6-alpine
-    restart: always
     environment:
       REDISCLI_AUTH: ${REDIS_PASSWORD:-difyai123456}
     volumes:
@@ -70,8 +69,29 @@ services:
         CELERY_LOG_FILE: /app/beat/logs/celerybeat.log
         CELERY_LOG_DIR: /app/beat/logs
         MODE: beat
+      command: celery -A src.celery_app:app beat --loglevel=info
       env_file:
         - ./.env
-      command: celery -A src.celery_app:app beat --logleve
+      depends_on:
+        - redis
+      volumes:
+        # Mount the storage directory to the container, for storing user files.
         - ./volumes/app/storage:/app/api/storage
         - ./volumes/beat/logs:/app/beat/logs
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./volumes/mysql/data:/var/lib/mysql
+      # 挂载初始化脚本目录
+      - ./mysql/init:/docker-entrypoint-initdb.d 
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+

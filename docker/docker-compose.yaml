@@ -21,6 +21,12 @@ x-shared-env: &shared-api-worker-env
   CELERY_USE_SENTINEL: ${CELERY_USE_SENTINEL:-false}
   CELERY_SENTINEL_MASTER_NAME: ${CELERY_SENTINEL_MASTER_NAME:-}
   CELERY_SENTINEL_SOCKET_TIMEOUT: ${CELERY_SENTINEL_SOCKET_TIMEOUT:-0.1}
+  DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-123456}
+  DB_HOST: ${DB_HOST:-mysql}
+  DB_PORT: ${DB_PORT:-3306}
+  DB_NAME: ${DB_NAME:-servo_ai}
+  DB_USER: ${DB_USER:-servo_user}
+  DB_PASSWORD: ${DB_PASSWORD:-servo_pass}
 
 services:
   api:
@@ -53,7 +59,6 @@ services:
 
   redis:
     image: redis:6-alpine
-    restart: always
     environment:
       REDISCLI_AUTH: ${REDIS_PASSWORD:-difyai123456}
     volumes:
@@ -72,6 +77,7 @@ services:
     environment:
       <<: *shared-api-worker-env
       CELERY_LOG_FILE: /app/worker/logs/celery.log
+      CELERY_LOG_DIR: /app/worker/logs
       MODE: worker
     command: celery -A src.celery_app:app worker --loglevel=info
     env_file:
@@ -89,12 +95,31 @@ services:
       environment:
         <<: *shared-api-worker-env
         CELERY_LOG_FILE: /app/beat/logs/celerybeat.log
+        CELERY_LOG_DIR: /app/beat/logs
         MODE: beat
+      command: celery -A src.celery_app:app beat --loglevel=info
       env_file:
         - ./.env
-      command: celery -A src.celery_app:app beat --loglevel=info
       depends_on:
         - redis
       volumes:
+        # Mount the storage directory to the container, for storing user files.
         - ./volumes/app/storage:/app/api/storage
         - ./volumes/beat/logs:/app/beat/logs
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./volumes/mysql/data:/var/lib/mysql
+      # 挂载初始化脚本目录
+      - ./mysql/init:/docker-entrypoint-initdb.d 
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+

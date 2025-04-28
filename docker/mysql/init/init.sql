@@ -1,0 +1,11 @@
+-- 创建测试表（如果不存在）
+CREATE TABLE IF NOT EXISTS test_table (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 插入初始数据（如果表为空）
+INSERT INTO test_table (name)
+SELECT * FROM (SELECT '测试数据') AS tmp
+WHERE NOT EXISTS (SELECT 1 FROM test_table LIMIT 1);
