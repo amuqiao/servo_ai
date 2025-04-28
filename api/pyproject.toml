@@ -5,7 +5,9 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "celery>=5.5.2",
     "fastapi[standard]>=0.112.2",
+    "pydantic-settings>=2.9.1",
     "redis>=5.2.1",
 ]
 
@@ -17,9 +19,11 @@ build-backend = "hatchling.build"
 hello = "uv_docker_example:hello"
 
 [tool.uv]
+index-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 dev-dependencies = [
     "ruff>=0.6.2",
     "fastapi-cli>=0.0.5",
     "requests>=2.32.3",
     "redis>=5.2.1",
+    "celery>=5.5.2",
 ]

@@ -1,5 +1,7 @@
 # Use a Python image with uv pre-installed
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+FROM python:3.12-slim-bookworm
+RUN pip install uv -i https://mirrors.aliyun.com/pypi/simple/
+
 
 # Install the project into `/app/api`
 WORKDIR /app/api
@@ -25,10 +27,16 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Place executables in the environment at the front of the path
 ENV PATH="/app/api/.venv/bin:$PATH"
 
+ENV PYTHONPATH="/app/api/src:/app/api:/app/api/src/api:$PYTHONPATH"
 # Reset the entrypoint, don't invoke `uv`
 ENTRYPOINT []
 
 # Run the FastAPI application by default
 # Uses `fastapi dev` to enable hot-reloading when the `watch` sync occurs
 # Uses `--host 0.0.0.0` to allow access from outside the container
-CMD ["fastapi", "dev", "--host", "0.0.0.0", "/app/api/src/api"]
+# CMD ["fastapi", "dev", "--host", "0.0.0.0", "/app/api/src/api"]
+# 根据MODE环境变量选择启动模式
+CMD ["sh", "-c", "if [ \"$MODE\" = \"api\" ]; then exec fastapi dev --host 0.0.0.0 /app/api/src/api; elif [ \"$MODE\" = \"worker\" ]; then exec celery -A src.celery_app:app worker --loglevel=info; elif [ \"$MODE\" = \"beat\" ]; then exec celery -A src.celery_app:app beat --loglevel=info; else echo \"Unknown MODE: $MODE\"; exit 1; fi"]
+# CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# CMD ["fastapi", "dev", "--host", "0.0.0.0", "/app/api/main:app"]
+# CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

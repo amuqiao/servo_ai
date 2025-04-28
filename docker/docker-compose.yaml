@@ -12,8 +12,8 @@ x-shared-env: &shared-api-worker-env
   REDIS_PASSWORD: ${REDIS_PASSWORD:-difyai123456}
   REDIS_USE_SSL: ${REDIS_USE_SSL:-false}
   REDIS_DB: ${REDIS_DB:-0}
-  CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://:difyai123456@redis:6379/1}
-  CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://:difyai123456@redis:6379/2}
+  CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://:difyai123456@redis:6379/0}
+  CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://:difyai123456@redis:6379/0}
   CELERY_WORKER_AMOUNT: ${CELERY_WORKER_AMOUNT:-1}
   CELERY_AUTO_SCALE: ${CELERY_AUTO_SCALE:-false}
   CELERY_MAX_WORKERS: ${CELERY_MAX_WORKERS:-}
@@ -61,6 +61,7 @@ services:
       - ./volumes/redis/data:/data
     # Set the redis password when startup redis server.
     command: redis-server --requirepass ${REDIS_PASSWORD:-difyai123456}
+    # command: redis-server --requirepass ${REDIS_PASSWORD:-difyai123456} --dir /data --dbfilename dump.rdb
     healthcheck:
       test: [ 'CMD', 'redis-cli', 'ping' ]
 
@@ -69,10 +70,10 @@ services:
       context: ../api
       dockerfile: Dockerfile
     environment:
-      # Use the shared environment variables.
       <<: *shared-api-worker-env
-      # Startup mode, 'worker' starts the Celery worker for processing the queue.
+      CELERY_LOG_FILE: /app/worker/logs/celery.log
       MODE: worker
+    command: celery -A src.celery_app:app worker --loglevel=info
     env_file:
       - ./.env
     depends_on:
@@ -81,3 +82,19 @@ services:
       # Mount the storage directory to the container, for storing user files.
       - ./volumes/app/storage:/app/api/storage
       - ./volumes/worker/logs:/app/worker/logs
+  beat:
+      build: 
+        context: ../api
+        dockerfile: Dockerfile
+      environment:
+        <<: *shared-api-worker-env
+        CELERY_LOG_FILE: /app/beat/logs/celerybeat.log
+        MODE: beat
+      env_file:
+        - ./.env
+      command: celery -A src.celery_app:app beat --loglevel=info
+      depends_on:
+        - redis
+      volumes:
+        - ./volumes/app/storage:/app/api/storage
+        - ./volumes/beat/logs:/app/beat/logs
