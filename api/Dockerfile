@@ -1,10 +1,24 @@
 # Use a Python image with uv pre-installed
 FROM python:3.12-slim-bookworm
+
+# 替换系统源（根据基础镜像版本调整）
+RUN sed -i 's@deb.debian.org@mirrors.aliyun.com@g' /etc/apt/sources.list.d/debian.sources
 RUN pip install uv -i https://mirrors.aliyun.com/pypi/simple/
 
 
 # Install the project into `/app/api`
 WORKDIR /app/api
+
+# 安装必要的工具
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    # 工具
+    busybox-static \
+    && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Application root directory
+ENV ROOT_DIR=/app/api
 
 # Enable bytecode compilation
 ENV UV_COMPILE_BYTECODE=1

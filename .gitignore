@@ -15,3 +15,4 @@ wheels/
 
 # Docker
 docker/volumes/redis/data/*
+docker/volumes/mysql/data/*
