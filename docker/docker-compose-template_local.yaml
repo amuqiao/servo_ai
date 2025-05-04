@@ -1,0 +1,65 @@
+x-shared-env: &shared-api-worker-env
+
+services:
+  api:
+    image: server_ai-api:dev
+    build: 
+      context: ../api
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      # Use the shared environment variables.
+      <<: *shared-api-worker-env
+      # Startup mode, 'api' starts the API server.
+      MODE: api
+    env_file:
+      - ./.env
+    volumes:
+      # Mount the storage directory to the container, for storing user files.
+      - ./volumes/app/storage:/app/api/storage
+      - ./volumes/api/logs:/app/api/logs
+    network_mode: host
+
+  worker:
+    image: server_ai-worker:dev
+    build: 
+      context: ../api
+      dockerfile: Dockerfile
+    environment:
+      <<: *shared-api-worker-env
+      CELERY_AUTO_SCALE: "true"
+      CELERY_MAX_WORKERS: 4
+      CELERY_MIN_WORKERS: 2
+      # 增加延迟确认配置
+      CELERY_ACKS_LATE: True  
+      # 添加预取限制
+      CELERYD_PREFETCH_MULTIPLIER: 1  
+      CELERY_LOG_FILE: /app/worker/logs/celery.log
+      CELERY_LOG_DIR: /app/worker/logs
+      MODE: worker
+    command: sh -c "mkdir -p $$CELERY_LOG_DIR && celery -A src.celery_app:app worker --autoscale=$$CELERY_MAX_WORKERS,$$CELERY_MIN_WORKERS --loglevel=info --logfile=$$CELERY_LOG_FILE"
+    env_file:
+      - ./.env
+    volumes:
+      - ./volumes/worker/logs:/app/worker/logs
+    network_mode: host
+  beat:
+      image: server_ai-beat:dev
+      build: 
+        context: ../api
+        dockerfile: Dockerfile
+      environment:
+        <<: *shared-api-worker-env
+        CELERY_LOG_FILE: /app/beat/logs/celerybeat.log
+        CELERY_LOG_DIR: /app/beat/logs
+        MODE: beat
+      command: sh -c "mkdir -p $$CELERY_LOG_DIR && celery -A src.celery_app:app beat --loglevel=info --logfile=$$CELERY_LOG_FILE"
+      env_file:
+        - ./.env
+      volumes:
+        - ./volumes/beat/logs:/app/beat/logs
+      network_mode: host
+
+
+

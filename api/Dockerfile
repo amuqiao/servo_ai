@@ -3,8 +3,10 @@ FROM python:3.12-slim-bookworm
 
 # 替换系统源（根据基础镜像版本调整）
 RUN sed -i 's@deb.debian.org@mirrors.aliyun.com@g' /etc/apt/sources.list.d/debian.sources
-RUN pip install uv -i https://mirrors.aliyun.com/pypi/simple/
-
+# http://mirrors.aliyun.com/pypi/simple/
+# https://pypi.tuna.tsinghua.edu.cn/simple/
+# 安装uv
+RUN pip install uv -i http://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com
 
 # Install the project into `/app/api`
 WORKDIR /app/api
@@ -27,16 +29,16 @@ ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 
 # Install the project's dependencies using the lockfile and settings
+# # 在uv同步阶段增加超时和重试参数
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --frozen --no-install-project --no-dev
-
+    uv sync --frozen --no-install-project --no-dev --index-url http://mirrors.aliyun.com/pypi/simple/
 # Then, add the rest of the project source code and install it
 # Installing separately from its dependencies allows optimal layer caching
 ADD . /app/api
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev
+    uv sync --frozen --no-dev --index-url http://mirrors.aliyun.com/pypi/simple/
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/api/.venv/bin:$PATH"
@@ -48,9 +50,7 @@ ENTRYPOINT []
 # Run the FastAPI application by default
 # Uses `fastapi dev` to enable hot-reloading when the `watch` sync occurs
 # Uses `--host 0.0.0.0` to allow access from outside the container
-# CMD ["fastapi", "dev", "--host", "0.0.0.0", "/app/api/src/api"]
+CMD ["fastapi", "dev", "--host", "0.0.0.0", "src/api"]
 # 根据MODE环境变量选择启动模式
-CMD ["sh", "-c", "if [ \"$MODE\" = \"api\" ]; then exec fastapi dev --host 0.0.0.0 /app/api/src/api; elif [ \"$MODE\" = \"worker\" ]; then exec celery -A src.celery_app:app worker --loglevel=info; elif [ \"$MODE\" = \"beat\" ]; then exec celery -A src.celery_app:app beat --loglevel=info; else echo \"Unknown MODE: $MODE\"; exit 1; fi"]
-# CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
-# CMD ["fastapi", "dev", "--host", "0.0.0.0", "/app/api/main:app"]
-# CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# CMD ["sh", "-c", "if [ \"$MODE\" = \"api\" ]; then exec fastapi dev --host 0.0.0.0 /app/api/src/api; elif [ \"$MODE\" = \"worker\" ]; then exec celery -A src.celery_app:app worker --loglevel=info; elif [ \"$MODE\" = \"beat\" ]; then exec celery -A src.celery_app:app beat --loglevel=info; else echo \"Unknown MODE: $MODE\"; exit 1; fi"]
+

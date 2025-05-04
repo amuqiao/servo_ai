@@ -46,6 +46,31 @@ def create_redis_key_task(task_id: str):
     except Exception as e:
         logger.error(f"[Task {task_id}] Redis operation failed: {str(e)}", exc_info=True)
         return False
+    
+def create_redis_key_task2(task_id: str):
+    config = ApiConfig()
+    
+    client = redis.Redis(
+        host=config.REDIS_HOST,
+        port=config.REDIS_PORT,
+        password=config.REDIS_PASSWORD,
+        db=int(config.REDIS_DB)
+    )
+    
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+    
+    try:
+        logger.info(f"[Task {task_id}] Connecting Redis: {redis_url.hostname}:{redis_url.port} DB: {redis_url.path}")
+        client.ping()
+        logger.info(f"[Task {task_id}] Storing key with TTL 3600s")
+        client.setex(task_id, 3600, f"task_{task_id}_value_{time.time()}")
+        logger.info(f"[Task {task_id}] Key stored successfully")
+        return True
+    except Exception as e:
+        logger.error(f"[Task {task_id}] Redis operation failed: {str(e)}", exc_info=True)
+        return False
 
 @shared_task(name='celery_app.tasks.process_ocr_task', bind=True, max_retries=3)
 def process_ocr_task(self, task_key):

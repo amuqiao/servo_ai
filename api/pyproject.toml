@@ -12,6 +12,7 @@ dependencies = [
     "pymysql>=1.1.1",
     "redis>=5.2.1",
     "requests>=2.32.3",
+    "sqlalchemy>=2.0.40",
 ]
 
 [build-system]
@@ -22,7 +23,7 @@ build-backend = "hatchling.build"
 hello = "uv_docker_example:hello"
 
 [tool.uv]
-index-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+index-url = "https://mirrors.aliyun.com/pypi/simple/"
 dev-dependencies = [
     "ruff>=0.6.2",
     "fastapi-cli>=0.0.5",

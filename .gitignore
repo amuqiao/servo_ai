@@ -9,6 +9,7 @@ wheels/
 
 # Virtual environments
 .venv
+.uv_cache
 
 # other
 .DS_Store

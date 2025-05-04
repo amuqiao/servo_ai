@@ -23,7 +23,8 @@ class ApiConfig(BaseSettings):
     
     REDIS_HOST: str = Field(env='REDIS_HOST')
     REDIS_PORT: int = Field(env='REDIS_PORT')
-    REDIS_PASSWORD: str = Field(env='REDIS_PASSWORD')
+    REDIS_PASSWORD: str = Field(default="", env='REDIS_PASSWORD')
+    REDIS_DB: int = Field(default=0, env='REDIS_DB')
     CELERY_BROKER_URL: str = Field(env='CELERY_BROKER_URL')
 
     class Config:

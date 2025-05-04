@@ -3,8 +3,8 @@ from fastapi import FastAPI
 from src.routers import health_check, task_router, task_processor, vlm_ocr_router
 from src.celery_app import app as celery_app
 from src.configs import ApiConfig
-from dotenv import load_dotenv
-load_dotenv()
+# from dotenv import load_dotenv
+# load_dotenv()
 
 
 # app = FastAPI()
@@ -21,10 +21,9 @@ app.include_router(task_router.router)
 # 在路由注册部分添加
 app.include_router(task_processor.router)
 app.include_router(vlm_ocr_router.router)
+# app.include_router(user_router.router)
 
 # 初始化Celery应用
-
-
 @app.on_event('startup')
 async def celery_init():
     from src.configs.celery_config import beat_schedule
@@ -44,7 +43,3 @@ async def root():
 
 if __name__ == "__main__":
     pass
-    # import uvicorn
-    # uvicorn.run(app, host="0.0.0.0", port=8000)
-    # import uvicorn
-    # uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

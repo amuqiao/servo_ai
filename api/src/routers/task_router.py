@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from src.celery_app.tasks import create_redis_key_task
+from src.celery_app.tasks import create_redis_key_task, create_redis_key_task2
 from pydantic import BaseModel
 import uuid
 
@@ -13,6 +13,12 @@ class TaskResponse(BaseModel):
 async def create_delayed_task():
     task_id = str(uuid.uuid4())
     task = create_redis_key_task.apply_async(args=[task_id], countdown=10)
+    return {"task_id": task_id, "expires_in": 3600}
+
+@router.post("/delay-set2", response_model=TaskResponse)
+async def create_delayed_task2():
+    task_id = str(uuid.uuid4())
+    task = create_redis_key_task2(task_id=task_id)
     return {"task_id": task_id, "expires_in": 3600}
 
 @router.get("/status/{redis_key}")

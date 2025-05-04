@@ -30,11 +30,16 @@ def get_db_connection():
 def get_redis_client():
     """创建Redis客户端连接"""
     config = ApiConfig()
+    connection_params = {
+        'host': config.REDIS_HOST,
+        'port': config.REDIS_PORT,
+        'decode_responses': True
+    }
+    if config.REDIS_PASSWORD:
+        connection_params['password'] = config.REDIS_PASSWORD
+        
     return redis.Redis(
-        host=config.REDIS_HOST,
-        port=config.REDIS_PORT,
-        password=config.REDIS_PASSWORD,
-        decode_responses=True
+        **connection_params
     )
 
 async def fetch_ocr_records(limit: int):
