@@ -6,9 +6,14 @@
 
 x-shared-env: &shared-api-worker-env
   COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-servo_ai}
-  REDIS_HOST: ${REDIS_HOST:-127.0.0.1}
+  DB_HOST: ${DB_HOST:-host.docker.internal}
+  DB_PORT: ${DB_PORT:-3306}
+  DB_NAME: ${DB_NAME:-iot_platform}
+  DB_USER: ${DB_USER:-root}
+  DB_PASSWORD: ${DB_PASSWORD:-123456}
+  REDIS_HOST: ${REDIS_HOST:-host.docker.internal}
   REDIS_PORT: ${REDIS_PORT:-6379}
-  REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+  REDIS_PASSWORD: ${REDIS_PASSWORD:-123456}
   REDIS_USE_SSL: ${REDIS_USE_SSL:-false}
   REDIS_DB: ${REDIS_DB:-0}
   CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://@127.0.0.1:6379/0}
@@ -25,11 +30,6 @@ x-shared-env: &shared-api-worker-env
   CELERY_USE_SENTINEL: ${CELERY_USE_SENTINEL:-false}
   CELERY_SENTINEL_MASTER_NAME: ${CELERY_SENTINEL_MASTER_NAME:-}
   CELERY_SENTINEL_SOCKET_TIMEOUT: ${CELERY_SENTINEL_SOCKET_TIMEOUT:-0.1}
-  DB_HOST: ${DB_HOST:-127.0.0.1}
-  DB_PORT: ${DB_PORT:-3306}
-  DB_NAME: ${DB_NAME:-iot_platform}
-  DB_USER: ${DB_USER:-root}
-  DB_PASSWORD: ${DB_PASSWORD:-Luffy2025@}
   LOG_FILE: ${LOG_FILE:-}
   LOG_FILE_MAX_SIZE: ${LOG_FILE_MAX_SIZE:-20}
   LOG_FILE_BACKUP_COUNT: ${LOG_FILE_BACKUP_COUNT:-5}
@@ -43,7 +43,7 @@ x-shared-env: &shared-api-worker-env
 
 services:
   api:
-    image: server_ai-api:dev
+    image: server_ai-api:local
     build: 
       context: ../api
       dockerfile: Dockerfile
@@ -59,11 +59,12 @@ services:
     volumes:
       # Mount the storage directory to the container, for storing user files.
       - ./volumes/app/storage:/app/api/storage
+      - ./volumes/api/logs:/app/api/logs
     networks:
       - servo_net
 
   worker:
-    image: server_ai-worker:dev
+    image: server_ai-worker:local
     build: 
       context: ../api
       dockerfile: Dockerfile
@@ -82,10 +83,12 @@ services:
     command: sh -c "mkdir -p $$CELERY_LOG_DIR && celery -A src.celery_app:app worker --autoscale=$$CELERY_MAX_WORKERS,$$CELERY_MIN_WORKERS --loglevel=info --logfile=$$CELERY_LOG_FILE"
     env_file:
       - ./.env
+    volumes:
+      - ./volumes/worker/logs:/app/worker/logs
     networks:
       - servo_net
   beat:
-      image: server_ai-beat:dev
+      image: server_ai-beat:local
       build: 
         context: ../api
         dockerfile: Dockerfile
@@ -97,6 +100,8 @@ services:
       command: sh -c "mkdir -p $$CELERY_LOG_DIR && celery -A src.celery_app:app beat --loglevel=info --logfile=$$CELERY_LOG_FILE"
       env_file:
         - ./.env
+      volumes:
+        - ./volumes/beat/logs:/app/beat/logs
       networks:
       - servo_net
 networks:

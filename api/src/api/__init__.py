@@ -1,6 +1,6 @@
 from routers import router
 from fastapi import FastAPI
-from src.routers import health_check, task_router, task_processor, vlm_ocr_router
+from src.routers import health_check, task_router, task_processor, vlm_ocr_router, user_router
 from src.celery_app import app as celery_app
 from src.configs import ApiConfig
 # from dotenv import load_dotenv
@@ -21,7 +21,7 @@ app.include_router(task_router.router)
 # 在路由注册部分添加
 app.include_router(task_processor.router)
 app.include_router(vlm_ocr_router.router)
-# app.include_router(user_router.router)
+app.include_router(user_router.router)
 
 # 初始化Celery应用
 @app.on_event('startup')

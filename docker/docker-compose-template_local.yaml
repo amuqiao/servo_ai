@@ -2,7 +2,7 @@ x-shared-env: &shared-api-worker-env
 
 services:
   api:
-    image: server_ai-api:dev
+    image: server_ai-api:local
     build: 
       context: ../api
       dockerfile: Dockerfile
@@ -19,10 +19,11 @@ services:
       # Mount the storage directory to the container, for storing user files.
       - ./volumes/app/storage:/app/api/storage
       - ./volumes/api/logs:/app/api/logs
-    network_mode: host
+    networks:
+      - servo_net
 
   worker:
-    image: server_ai-worker:dev
+    image: server_ai-worker:local
     build: 
       context: ../api
       dockerfile: Dockerfile
@@ -43,9 +44,10 @@ services:
       - ./.env
     volumes:
       - ./volumes/worker/logs:/app/worker/logs
-    network_mode: host
+    networks:
+      - servo_net
   beat:
-      image: server_ai-beat:dev
+      image: server_ai-beat:local
       build: 
         context: ../api
         dockerfile: Dockerfile
@@ -59,7 +61,11 @@ services:
         - ./.env
       volumes:
         - ./volumes/beat/logs:/app/beat/logs
-      network_mode: host
+      networks:
+      - servo_net
+networks:
+  servo_net:
+    driver: bridge
 
 
 
