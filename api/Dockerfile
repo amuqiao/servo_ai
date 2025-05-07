@@ -16,6 +16,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     # 工具
     busybox-static \
+    redis-tools \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 

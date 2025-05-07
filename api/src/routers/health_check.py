@@ -1,7 +1,11 @@
 from fastapi import APIRouter
+import logging
 
 router = APIRouter(prefix="/api/health", tags=["System"])
 
+logger = logging.getLogger(__name__)
+
 @router.get("/")
 async def health_check():
-    return {"status": "ok2"}
+    logger.info("Health check request received")
+    return {"status": "ok"}

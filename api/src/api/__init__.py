@@ -1,14 +1,24 @@
+import os
 from routers import router
 from fastapi import FastAPI
 from src.routers import health_check, task_router, task_processor, vlm_ocr_router, user_router
 from src.celery_app import app as celery_app
 from src.configs import ApiConfig
-# from dotenv import load_dotenv
-# load_dotenv()
+from src.configs.logging_config import setup_logging
+from dotenv import load_dotenv
+load_dotenv()
 
+# 在dotenv导入后添加日志初始化
+from src.configs.logging_config import setup_logging
+setup_logging()
 
-# app = FastAPI()
 app = FastAPI(title="ServoAI_API", version="1.0.0")
+
+# 按需加载日志中间件
+if os.getenv('LOG_MIDDLEWARE_ENABLED', 'False').lower() == 'true':
+    middleware = setup_logging()
+    if middleware:
+        app.middleware('http')(middleware)
 
 # 注册路由模块
 app.include_router(router)

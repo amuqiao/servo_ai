@@ -1,0 +1,95 @@
+2025-05-07 09:14:57+0000 - INFO - server:83 - Started server process [8]
+2025-05-07 09:14:57+0000 - INFO - on:48 - Waiting for application startup.
+2025-05-07 09:14:57+0000 - INFO - on:62 - Application startup complete.
+2025-05-07 09:15:39+0000 - INFO - httptools_impl:476 - 172.17.0.1:62436 - "GET /docs HTTP/1.1" 200
+2025-05-07 09:15:40+0000 - INFO - httptools_impl:476 - 172.17.0.1:62436 - "GET /openapi.json HTTP/1.1" 200
+2025-05-07 09:15:49+0000 - ERROR - tasks:72 - [Task c913d780-9d16-4c6f-961c-df096601143a] Redis operation failed: name 'redis_url' is not defined
+Traceback (most recent call last):
+  File "/app/api/src/celery_app/tasks.py", line 65, in create_redis_key_task2
+    logger.info(f"[Task {task_id}] Connecting Redis: {redis_url.hostname}:{redis_url.port} DB: {redis_url.path}")
+                                                      ^^^^^^^^^
+NameError: name 'redis_url' is not defined
+2025-05-07 09:15:49+0000 - INFO - httptools_impl:476 - 172.17.0.1:62440 - "POST /api/tasks/delay-set2 HTTP/1.1" 200
+2025-05-07 09:17:35+0000 - INFO - server:263 - Shutting down
+2025-05-07 09:17:35+0000 - INFO - on:67 - Waiting for application shutdown.
+2025-05-07 09:17:35+0000 - INFO - on:76 - Application shutdown complete.
+2025-05-07 09:17:35+0000 - INFO - server:93 - Finished server process [8]
+2025-05-07 09:19:30 - INFO - server:83 - Started server process [14]
+2025-05-07 09:19:30 - INFO - on:48 - Waiting for application startup.
+2025-05-07 09:19:30 - INFO - on:62 - Application startup complete.
+2025-05-07 09:21:22 - INFO - server:263 - Shutting down
+2025-05-07 09:21:22 - INFO - on:67 - Waiting for application shutdown.
+2025-05-07 09:21:22 - INFO - on:76 - Application shutdown complete.
+2025-05-07 09:21:22 - INFO - server:93 - Finished server process [14]
+2025-05-07 09:30:28 - INFO - server:83 - Started server process [25]
+2025-05-07 09:30:28 - INFO - on:48 - Waiting for application startup.
+2025-05-07 09:30:28 - INFO - on:62 - Application startup complete.
+2025-05-07 09:30:28 - INFO - user_router:32 - Received request to init table: users
+2025-05-07 09:30:28 - DEBUG - user_router:34 - 成功获取数据库连接: <sqlalchemy.orm.session.Session object at 0x7fe93cf21940>
+2025-05-07 09:30:28 - INFO - httptools_impl:476 - 172.17.0.1:62694 - "POST /api/users/init-table HTTP/1.1" 200
+2025-05-07 09:30:28 - INFO - httptools_impl:476 - 172.17.0.1:59236 - "GET /docs HTTP/1.1" 200
+2025-05-07 09:30:29 - INFO - httptools_impl:476 - 172.17.0.1:59236 - "GET /openapi.json HTTP/1.1" 200
+2025-05-07 09:30:56 - INFO - server:263 - Shutting down
+2025-05-07 09:30:57 - INFO - on:67 - Waiting for application shutdown.
+2025-05-07 09:30:57 - INFO - on:76 - Application shutdown complete.
+2025-05-07 09:30:57 - INFO - server:93 - Finished server process [25]
+2025-05-07 09:31:09 - INFO - server:83 - Started server process [8]
+2025-05-07 09:31:09 - INFO - on:48 - Waiting for application startup.
+2025-05-07 09:31:09 - INFO - on:62 - Application startup complete.
+2025-05-07 09:31:21 - INFO - server:263 - Shutting down
+2025-05-07 09:31:21 - INFO - on:67 - Waiting for application shutdown.
+2025-05-07 09:31:21 - INFO - on:76 - Application shutdown complete.
+2025-05-07 09:31:21 - INFO - server:93 - Finished server process [8]
+2025-05-07 09:31:52 - INFO - server:83 - Started server process [8]
+2025-05-07 09:31:52 - INFO - on:48 - Waiting for application startup.
+2025-05-07 09:31:52 - INFO - on:62 - Application startup complete.
+2025-05-07 09:33:09 - INFO - httptools_impl:476 - 172.17.0.1:59034 - "GET /api/health/ HTTP/1.1" 200
+2025-05-07 09:33:49 - INFO - server:263 - Shutting down
+2025-05-07 09:33:49 - INFO - on:67 - Waiting for application shutdown.
+2025-05-07 09:33:49 - INFO - on:76 - Application shutdown complete.
+2025-05-07 09:33:49 - INFO - server:93 - Finished server process [8]
+2025-05-07 09:33:51 - INFO - server:83 - Started server process [11]
+2025-05-07 09:33:51 - INFO - on:48 - Waiting for application startup.
+2025-05-07 09:33:51 - INFO - on:62 - Application startup complete.
+2025-05-07 09:33:52 - INFO - server:263 - Shutting down
+2025-05-07 09:33:52 - INFO - on:67 - Waiting for application shutdown.
+2025-05-07 09:33:52 - INFO - on:76 - Application shutdown complete.
+2025-05-07 09:33:52 - INFO - server:93 - Finished server process [11]
+2025-05-07 09:33:54 - INFO - server:83 - Started server process [13]
+2025-05-07 09:33:54 - INFO - on:48 - Waiting for application startup.
+2025-05-07 09:33:54 - INFO - on:62 - Application startup complete.
+2025-05-07 09:35:18 - INFO - server:263 - Shutting down
+2025-05-07 09:35:18 - INFO - on:67 - Waiting for application shutdown.
+2025-05-07 09:35:18 - INFO - on:76 - Application shutdown complete.
+2025-05-07 09:35:18 - INFO - server:93 - Finished server process [13]
+2025-05-07 09:35:21 - INFO - server:83 - Started server process [16]
+2025-05-07 09:35:21 - INFO - on:48 - Waiting for application startup.
+2025-05-07 09:35:21 - INFO - on:62 - Application startup complete.
+2025-05-07 09:36:34 - INFO - health_check:10 - Health check request received
+2025-05-07 09:36:34 - INFO - httptools_impl:476 - 172.17.0.1:57502 - "GET /api/health/ HTTP/1.1" 200
+2025-05-07 09:39:33 - INFO - user_router:32 - Received request to init table: users
+2025-05-07 09:39:33 - DEBUG - user_router:34 - 成功获取数据库连接: <sqlalchemy.orm.session.Session object at 0x7ff89edfd7f0>
+2025-05-07 09:39:33 - INFO - httptools_impl:476 - 172.17.0.1:64354 - "POST /api/users/init-table HTTP/1.1" 200
+2025-05-07 09:46:39 - INFO - server:263 - Shutting down
+2025-05-07 09:46:39 - INFO - on:67 - Waiting for application shutdown.
+2025-05-07 09:46:39 - INFO - on:76 - Application shutdown complete.
+2025-05-07 09:46:39 - INFO - server:93 - Finished server process [16]
+2025-05-07 09:46:41 - INFO - server:83 - Started server process [18]
+2025-05-07 09:46:41 - INFO - on:48 - Waiting for application startup.
+2025-05-07 09:46:41 - INFO - on:62 - Application startup complete.
+2025-05-07 09:48:57,319 INFO [server.py:83] Started server process [8]
+2025-05-07 09:48:57,321 INFO [on.py:48] Waiting for application startup.
+2025-05-07 09:48:57,333 INFO [on.py:62] Application startup complete.
+2025-05-07 09:49:08,952 INFO [health_check.py:10] Health check request received
+2025-05-07 09:49:08,953 INFO [httptools_impl.py:476] 172.17.0.1:55960 - "GET /api/health/ HTTP/1.1" 200
+2025-05-07 09:51:25,14 INFO [server.py:263] Shutting down
+2025-05-07 09:51:25,117 INFO [on.py:67] Waiting for application shutdown.
+2025-05-07 09:51:25,119 INFO [on.py:76] Application shutdown complete.
+2025-05-07 09:51:25,122 INFO [server.py:93] Finished server process [8]
+2025-05-07 09:51:39,424 INFO [server.py:83] Started server process [8]
+2025-05-07 09:51:39,427 INFO [on.py:48] Waiting for application startup.
+2025-05-07 09:51:39,444 INFO [on.py:62] Application startup complete.
+2025-05-07 09:54:48,534 INFO [server.py:263] Shutting down
+2025-05-07 09:54:48,637 INFO [on.py:67] Waiting for application shutdown.
+2025-05-07 09:54:48,639 INFO [on.py:76] Application shutdown complete.
+2025-05-07 09:54:48,641 INFO [server.py:93] Finished server process [8]

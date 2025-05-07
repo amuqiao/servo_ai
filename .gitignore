@@ -19,3 +19,4 @@ docker/volumes/redis/data/*
 docker/volumes/mysql/data/*
 docker/volumes/beat/logs/*
 docker/volumes/worker/logs/*
+docker/volumes/api/logs/*

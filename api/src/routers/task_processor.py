@@ -19,7 +19,7 @@ def get_db_connection():
             host=config.DB_HOST,
             user=config.DB_USER,
             password=config.DB_PASSWORD,
-            db="iot_platform",  # 改用配置中的数据库名
+            db=config.DB_NAME,
             port=config.DB_PORT,
             cursorclass=pymysql.cursors.DictCursor
         )
@@ -48,16 +48,10 @@ async def fetch_ocr_records(limit: int):
     try:
         connection = get_db_connection()
         with connection.cursor() as cursor:
-            sql1 = """
-                SELECT id, url 
-                FROM t_gec_file_ocr_record 
-                WHERE (ai_status != 1 OR ai_status is NULL)
-                LIMIT %s
-            """
             sql = """
                 SELECT id, url 
                 FROM t_gec_file_ocr_record 
-                WHERE (ai_status = 1)
+                WHERE (ai_status != 1 OR ai_status is NULL)
                 LIMIT %s
             """
             cursor.execute(sql, (limit,))

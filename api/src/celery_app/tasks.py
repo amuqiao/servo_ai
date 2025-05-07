@@ -26,10 +26,10 @@ def create_redis_key_task(task_id: str):
     redis_url = urlparse(ApiConfig().CELERY_BROKER_URL)
     
     client = redis.Redis(
-        host=redis_url.hostname,
-        port=redis_url.port,
-        password=redis_url.password,
-        db=int(redis_url.path.strip('/'))
+        host=config.REDIS_HOST,
+        port=config.REDIS_PORT,
+        password=config.REDIS_PASSWORD,
+        db=int(config.REDIS_DB)
     )
     
     import logging
@@ -37,7 +37,7 @@ def create_redis_key_task(task_id: str):
     logger.setLevel(logging.INFO)
     
     try:
-        logger.info(f"[Task {task_id}] Connecting Redis: {redis_url.hostname}:{redis_url.port} DB: {redis_url.path}")
+        logger.info(f"[Task {task_id}] Connecting Redis: {config.REDIS_HOST}:{config.REDIS_PORT} DB: {config.REDIS_DB}")
         client.ping()
         logger.info(f"[Task {task_id}] Storing key with TTL 3600s")
         client.setex(task_id, 3600, f"task_{task_id}_value_{time.time()}")
@@ -62,7 +62,7 @@ def create_redis_key_task2(task_id: str):
     logger.setLevel(logging.INFO)
     
     try:
-        logger.info(f"[Task {task_id}] Connecting Redis: {redis_url.hostname}:{redis_url.port} DB: {redis_url.path}")
+        logger.info(f"[Task {task_id}] Connecting Redis: {config.REDIS_HOST}:{config.REDIS_PORT} DB: {config.REDIS_DB}")
         client.ping()
         logger.info(f"[Task {task_id}] Storing key with TTL 3600s")
         client.setex(task_id, 3600, f"task_{task_id}_value_{time.time()}")
@@ -128,7 +128,7 @@ def process_ocr_task(self, task_key):
 def setup_periodic_tasks(sender, **kwargs):
     logger = logging.getLogger(__name__)
     try:
-        logger.info("注册定时任务: %s (间隔 %.1f 秒)", 'scan redis tasks', 10.0)
+        logger.info("注册定时任务: %s (间隔 %.1f 秒)", 'scan redis tasks', 60.0)
         sender.add_periodic_task(
             10.0,
             scan_redis_tasks.s(),
