@@ -51,7 +51,7 @@ ENTRYPOINT []
 # Run the FastAPI application by default
 # Uses `fastapi dev` to enable hot-reloading when the `watch` sync occurs
 # Uses `--host 0.0.0.0` to allow access from outside the container
-CMD ["fastapi", "dev", "--host", "0.0.0.0", "src/api"]
+# CMD ["fastapi", "dev", "--host", "0.0.0.0", "src/api"]
 # 根据MODE环境变量选择启动模式
-# CMD ["sh", "-c", "if [ \"$MODE\" = \"api\" ]; then exec fastapi dev --host 0.0.0.0 /app/api/src/api; elif [ \"$MODE\" = \"worker\" ]; then exec celery -A src.celery_app:app worker --loglevel=info; elif [ \"$MODE\" = \"beat\" ]; then exec celery -A src.celery_app:app beat --loglevel=info; else echo \"Unknown MODE: $MODE\"; exit 1; fi"]
+CMD ["sh", "-c", "if [ \"$MODE\" = \"api\" ]; then exec fastapi dev --host 0.0.0.0 /app/api/src/api; elif [ \"$MODE\" = \"worker\" ]; then exec celery -A src.celery_app:app worker --loglevel=info; elif [ \"$MODE\" = \"beat\" ]; then exec celery -A src.celery_app:app beat --loglevel=info; else echo \"Unknown MODE: $MODE\"; exit 1; fi"]
 

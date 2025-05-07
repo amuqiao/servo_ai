@@ -16,8 +16,8 @@ x-shared-env: &shared-api-worker-env
   REDIS_PASSWORD: ${REDIS_PASSWORD:-23ob4WeHlhkR}
   REDIS_USE_SSL: ${REDIS_USE_SSL:-false}
   REDIS_DB: ${REDIS_DB:-0}
-  CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://:123456@host.docker.internal:6379/0}
-  CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://:123456@host.docker.internal:6379/0}
+  CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://:23ob4WeHlhkR@10.51.2.32:6379/0}
+  CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://:23ob4WeHlhkR@10.51.2.32:6379/0}
   CELERY_TIMEZONE: ${CELERY_TIMEZONE:-Asia/Shanghai}
   CELERY_TASK_SERIALIZER: ${CELERY_TASK_SERIALIZER:-json}
   CELERY_RESULT_SERIALIZER: ${CELERY_RESULT_SERIALIZER:-json}
@@ -30,12 +30,12 @@ x-shared-env: &shared-api-worker-env
   CELERY_USE_SENTINEL: ${CELERY_USE_SENTINEL:-false}
   CELERY_SENTINEL_MASTER_NAME: ${CELERY_SENTINEL_MASTER_NAME:-}
   CELERY_SENTINEL_SOCKET_TIMEOUT: ${CELERY_SENTINEL_SOCKET_TIMEOUT:-0.1}
-  LOG_FILE: ${LOG_FILE:-}
+  LOG_LEVEL: ${LOG_LEVEL:-DEBUG}
   LOG_FILE_MAX_SIZE: ${LOG_FILE_MAX_SIZE:-20}
   LOG_FILE_BACKUP_COUNT: ${LOG_FILE_BACKUP_COUNT:-5}
-  LOG_DATEFORMAT: ${LOG_DATEFORMAT:-%Y-%m-%d %H:%M:%S}
-  LOG_TZ: ${LOG_TZ:-UTC}
-  LOG_FORMAT: ${LOG_FORMAT:-%(asctime)s,%(msecs)d %(levelname)-2s [%(filename)s:%(lineno)d] %(req_id)s %(message)s}
+  LOG_DIR: ${LOG_DIR:-/app/api/logs}
+  LOG_TZ: ${LOG_TZ:-Asia/Shanghai}
+  LOG_FORMAT: ${LOG_FORMAT:-%(asctime)s,%(msecs)d %(levelname)-2s [%(filename)s:%(lineno)d] %(message)s}
   DIFY_BASE_URL: ${DIFY_BASE_URL:-http://xuntian-ai-sit.tclpv.com}
   DIFY_API_KEY: ${DIFY_API_KEY:-app-FpC7jmVhoS90BTUSfCxsm0gG}
   DIFY_TIMEOUT: ${DIFY_TIMEOUT:-300}

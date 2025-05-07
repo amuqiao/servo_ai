@@ -8,4 +8,4 @@ logger = logging.getLogger(__name__)
 @router.get("/")
 async def health_check():
     logger.info("Health check request received")
-    return {"status": "ok"}
+    return {"status": "ok3"}

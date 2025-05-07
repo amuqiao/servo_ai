@@ -51,7 +51,7 @@ async def fetch_ocr_records(limit: int):
             sql = """
                 SELECT id, url 
                 FROM t_gec_file_ocr_record 
-                WHERE (ai_status != 1 OR ai_status is NULL)
+                WHERE (ai_status = 1 OR ai_status is NULL)
                 LIMIT %s
             """
             cursor.execute(sql, (limit,))

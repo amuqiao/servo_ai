@@ -14,12 +14,6 @@ setup_logging()
 
 app = FastAPI(title="ServoAI_API", version="1.0.0")
 
-# 按需加载日志中间件
-if os.getenv('LOG_MIDDLEWARE_ENABLED', 'False').lower() == 'true':
-    middleware = setup_logging()
-    if middleware:
-        app.middleware('http')(middleware)
-
 # 注册路由模块
 app.include_router(router)
 
