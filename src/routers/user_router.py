@@ -23,8 +23,6 @@ from src.validators.user_validators import (
 # 初始化路由实例
 router = APIRouter(prefix="/api/users", tags=["users"])
 
-# 配置日志系统
-setup_logging()
 logger = logging.getLogger(__name__)
 
 @router.post("/init-table", response_model=UserResponse)

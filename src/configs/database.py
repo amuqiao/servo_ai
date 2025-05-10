@@ -8,7 +8,6 @@ from urllib.parse import quote_plus
 from sqlalchemy.engine import URL
 import logging
 
-setup_logging()
 logger = logging.getLogger(__name__)
 
 Base = declarative_base()
@@ -26,6 +25,15 @@ def get_db_engine():
             "database": config.DB_NAME
         }
         
+        logger.debug(
+            "正在初始化数据库连接，驱动：%s,主机：%s, 端口：%s, 数据库：%s, 用户：%s",
+            connection_dict["drivername"],
+            connection_dict["host"],
+            connection_dict["port"],
+            connection_dict["database"],
+            connection_dict["username"]
+        )
+
         # 添加连接池配置
         pool_config = {
             "pool_size": 10,          # 连接池保持的连接数
@@ -38,6 +46,7 @@ def get_db_engine():
         return create_engine(
             connection_url, 
             pool_pre_ping=True,
+            echo=True,
             **pool_config
         )
     except Exception as e:

@@ -6,7 +6,15 @@ from src.configs.logging_config import setup_logging
 from src.celery_app import app as celery_app
 from src.configs.celery_config import beat_schedule
 
+import sys, os
+import logging
+
+logger = logging.getLogger(__name__)
+logger.debug(f"当前工作目录：{os.getcwd()}")
+logger.debug(f"Python路径：{sys.path}")
+
 setup_logging()
+config = ApiConfig()
 
 app = FastAPI(title="ServoAI_API", version="1.0.0")
 
@@ -40,7 +48,7 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    import sys, os
-    print(f"当前工作目录：{os.getcwd()}")
-    print(f"Python路径：{sys.path}")
+    # import sys, os
+    # print(f"当前工作目录：{os.getcwd()}")
+    # print(f"Python路径：{sys.path}")
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -34,7 +34,7 @@ class ApiConfig(BaseSettings):
     CELERY_RESULT_BACKEND: str = Field(env='CELERY_RESULT_BACKEND')
 
     class Config:
-        env_file = ".env"  # 显式指定.env文件路径
-        env_file_encoding = "utf-8"  # 文件编码格式
-        env_prefix = ""  # 环境变量前缀
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+        env_prefix = ""
         extra = "allow"
