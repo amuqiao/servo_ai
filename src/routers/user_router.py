@@ -1,21 +1,16 @@
+# 优化后的import结构（标准库→第三方库→本地模块）
+from datetime import datetime
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Body
 from pydantic import BaseModel, Field
-from sqlalchemy.orm import Session
-from typing import List, Optional
-from datetime import datetime
-from src.models.user_model import User
-from src.configs.database import SessionLocal, get_db_conn
-import logging
-from src.configs.logging_config import setup_logging
 from sqlalchemy import inspect
+from sqlalchemy.orm import Session
+import logging
 
-
-router = APIRouter(prefix="/api/users", tags=["users"])
-
-setup_logging()
-
-logger = logging.getLogger(__name__)
-
+# 本地模块导入
+from src.models.user_model import User
+from src.configs.database import get_db_conn
+from src.configs.logging_config import setup_logging
 from src.validators.user_validators import (
     InitTableRequest,
     UserCreateRequest,
@@ -25,26 +20,39 @@ from src.validators.user_validators import (
     UserResponse
 )
 
+# 初始化路由实例
+router = APIRouter(prefix="/api/users", tags=["users"])
+
+# 配置日志系统
+setup_logging()
+logger = logging.getLogger(__name__)
+
 @router.post("/init-table", response_model=UserResponse)
 async def init_user_table(
     request: InitTableRequest = Body(...),
+    db: Session = Depends(get_db_conn)  # 改为依赖注入模式
 ):
-    logger.info(f"Received request to init table: {request.table_name}")
-    db = next(get_db_conn())
-    logger.debug(f"成功获取数据库连接: {db}")
+    """初始化用户表（使用数据库连接池）"""
+    logger.info(f"初始化用户表请求: {request.table_name}")
+    
     if not request.table_name:
         raise HTTPException(status_code=400, detail="缺少必要参数table_name")
-    
+
     try:
+        # 检查表是否存在
         inspector = inspect(db.get_bind())
         if inspector.has_table(request.table_name):
             return {"message": f"表 {request.table_name} 已存在"}
             
+        # 创建表操作（自动事务管理）
         User.metadata.create_all(bind=db.get_bind(), tables=[User.__table__])
         return {"message": f"表 {request.table_name} 初始化成功"}
+        
     except Exception as e:
         logger.error(f"数据库操作失败: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"数据库操作失败: {str(e)}")
+    finally:
+        db.close()  # 确保连接归还连接池
 
 # 更新创建接口
 @router.post("", response_model=UserDetailResponse, status_code=201)

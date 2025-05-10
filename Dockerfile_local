@@ -1,0 +1,73 @@
+# 基础镜像：使用预装 uv 工具的 Python 3.12 镜像
+# - 基于 Debian bookworm-slim 构建，兼顾轻量化和完整性
+# - 预装 astral-sh/uv 提供高效的 Python 依赖管理
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+
+# 设置工作目录为 /app
+# - 后续所有操作默认在此目录执行
+# - 保持容器内路径与开发环境一致
+WORKDIR /app
+
+# 安装必要的工具
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    # 网络测试
+    busybox-static \
+    redis-tools \
+    redis-server \
+    # 管理celery进程
+    supervisor \
+    && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# 复制Redis配置文件
+COPY redis.conf /etc/redis/redis.conf
+
+# 启用字节码编译优化
+# - 提升 Python 运行时性能
+# - 生成的 .pyc 文件会缓存到 /root/.cache/uv
+ENV UV_COMPILE_BYTECODE=1
+
+# 设置依赖安装模式为复制（非符号链接）
+# - 当挂载卷使用时确保依赖文件完整复制
+# - 避免开发环境与容器环境链接冲突
+ENV UV_LINK_MODE=copy
+
+# 安装项目依赖（第一阶段）
+# 缓存策略：
+# 1. 挂载 uv 缓存目录加速后续构建
+# 2. 绑定依赖锁定文件确保版本一致性
+# 3. --frozen 模式严格遵循 uv.lock 版本
+# 4. --no-install-project 暂不安装项目代码
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --frozen --no-install-project --no-dev
+
+# 添加项目代码并完成安装（第二阶段）
+# 分层构建优化：
+# 1. ADD 指令创建独立层，代码变更时复用依赖层
+# 2. 再次同步依赖确保项目安装时的环境一致
+# 3. --no-dev 排除开发依赖，缩减生产环境体积
+ADD . /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev
+
+# 配置环境变量 PATH
+# 将虚拟环境的 bin 目录置于最前
+# 确保容器内命令优先使用项目安装的可执行文件
+ENV PATH="/app/.venv/bin:$PATH"
+
+# 重置入口点
+# 避免继承基础镜像的 uv 相关入口命令
+# 为应用运行提供干净的初始化环境
+ENTRYPOINT []
+
+# 容器启动命令配置
+# 使用 fastapi dev 命令：
+# - 启用开发模式的热重载功能
+# - 监听文件变化自动重启服务
+# 设置 --host 0.0.0.0：
+# - 允许从容器外部访问服务
+# - 兼容 Docker 网络桥接模式
+CMD ["fastapi", "dev", "--host", "0.0.0.0", "/app/src/api/main.py"]

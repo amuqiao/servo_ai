@@ -1,8 +1,10 @@
+**/.DS_Store
 .venv
 **/__pycache__
 **/*.pyc
 
 
+/test
 tmp/*
 logs/*
 celerybeat-schedule
