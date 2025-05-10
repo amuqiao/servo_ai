@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routers import router
+from src.routers import router
 from src.routers import health_check, task_router, task_processor, vlm_ocr_router, user_router
 from src.configs import ApiConfig
 from src.configs.logging_config import setup_logging
@@ -40,4 +40,7 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
+    import sys, os
+    print(f"当前工作目录：{os.getcwd()}")
+    print(f"Python路径：{sys.path}")
     uvicorn.run(app, host="0.0.0.0", port=8000)
