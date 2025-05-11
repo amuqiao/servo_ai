@@ -49,7 +49,6 @@ fi
 
 echo "正在构建Docker镜像..."
 echo "使用的Dockerfile路径: $DOCKERFILE_PATH"
-# 构建Docker镜像
 # 执行Docker容器
 docker run \
     --rm \
