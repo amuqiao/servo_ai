@@ -75,4 +75,4 @@ ENTRYPOINT []
 # 设置 --host 0.0.0.0：
 # - 允许从容器外部访问服务
 # - 兼容 Docker 网络桥接模式
-CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
