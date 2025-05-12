@@ -31,16 +31,29 @@ app.include_router(user_router.router)
 # 初始化Celery配置
 @app.on_event('startup')
 async def init_celery():
-    
-    celery_app.conf.update(
-        broker_url=ApiConfig().CELERY_BROKER_URL,
-        backend=ApiConfig().CELERY_RESULT_BACKEND,
-        task_serializer='json',
-        accept_content=['json'], # todo 这里为什么要加这个呢？
-        result_serializer='json',
-        beat_schedule=beat_schedule,
-        result_expires=3600,
-    )
+    logger.info("正在初始化Celery配置...")
+    try:
+        config_params = {
+            "broker": ApiConfig().CELERY_BROKER_URL[:25] + '*****',
+            "backend": ApiConfig().CELERY_RESULT_BACKEND[:20] + '*****',
+            "task_serializer": 'json',
+            "result_expires": 3600
+        }
+        logger.debug(f"Celery配置参数: {config_params}")
+        
+        celery_app.conf.update(
+            broker_url=ApiConfig().CELERY_BROKER_URL,
+            backend=ApiConfig().CELERY_RESULT_BACKEND,
+            task_serializer='json',
+            accept_content=['json'],
+            result_serializer='json',
+            beat_schedule=beat_schedule,
+            result_expires=3600,
+        )
+        logger.info("Celery配置成功")
+    except Exception as e:
+        logger.error("Celery初始化失败", exc_info=True)
+        raise
     
 @app.get("/")
 async def root():

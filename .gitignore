@@ -8,6 +8,6 @@
 /test
 tmp/*
 **/logs/
-celerybeat-schedule
+celerybeat-schedule*
 .github/workflows/*
 .dockerignore

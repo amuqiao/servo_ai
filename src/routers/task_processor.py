@@ -62,6 +62,30 @@ async def fetch_ocr_records(limit: int):
     finally:
         connection.close()
 
+async def fetch_ocr_records_by_business_ids(business_ids: list[str]):
+    """根据business_ids获取OCR记录"""
+    if not business_ids:
+        raise HTTPException(status_code=400, detail="业务ID列表不能为空")
+
+    connection = None
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            sql = """
+                SELECT id, url 
+                FROM t_gec_file_ocr_record
+                WHERE business_id IN %s
+                AND (ai_status != 1 OR ai_status IS NULL)
+            """
+            cursor.execute(sql, (tuple(business_ids),))
+            return cursor.fetchall()
+    except Exception as e:
+        logger.error(f"业务ID查询失败: {str(e)}")
+        raise HTTPException(status_code=500, detail="数据库操作异常")
+    finally:
+        if connection:
+            connection.close()
+
 async def store_to_redis(data: dict):
     """存储数据到Redis并返回task_id"""
     try:
@@ -100,4 +124,29 @@ async def process_ocr_tasks(limit: int):
         raise he
     except Exception as e:
         logger.error(f"处理异常: {str(e)}")
+        raise HTTPException(status_code=500, detail="服务器内部错误")
+
+@router.post("/process/by-business-ids")
+async def process_ocr_by_business_ids(business_ids: list[str]):
+    """
+    根据业务ID处理OCR任务接口
+    - business_ids: 业务ID列表
+    - 返回: 包含task_id的列表
+    """
+    try:
+        records = await fetch_ocr_records_by_business_ids(business_ids)
+        if not records:
+            return {"task_ids": [], "message": "没有找到对应的OCR记录"}
+
+        task_ids = []
+        for record in records:
+            task_data = {str(record['id']): record['url']}
+            task_id = await store_to_redis(task_data)
+            task_ids.append(task_id)
+
+        return {"task_ids": task_ids}
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"业务ID处理异常: {str(e)}")
         raise HTTPException(status_code=500, detail="服务器内部错误")
