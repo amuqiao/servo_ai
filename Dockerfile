@@ -10,6 +10,9 @@ RUN apt-get update && \
     redis-tools \
     redis-server \
     supervisor \
+    curl \
+    wget \
+    vim \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
