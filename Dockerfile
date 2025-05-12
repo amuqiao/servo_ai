@@ -7,12 +7,12 @@ FROM python:3.12-slim-bookworm
 RUN sed -i 's@deb.debian.org@mirrors.tuna.tsinghua.edu.cn@g' /etc/apt/sources.list.d/debian.sources
 
 
-
 # 2. 写入清华源配置（覆盖官方源）
-RUN echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm main contrib non-free" > /etc/apt/sources.list && \
-    echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm-updates main contrib non-free" >> /etc/apt/sources.list && \
-    echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian-security bookworm-security main contrib non-free" >> /etc/apt/sources.list
-
+# 导入Debian镜像的GPG密钥（使用清华密钥服务器）
+RUN apt-get update && apt-get install -y gnupg2 && \
+    apt-key adv --keyserver hkp://keyserver.tuna.tsinghua.edu.cn --recv-keys 0E98404D386FA1D9 && \
+    apt-key adv --keyserver hkp://keyserver.tuna.tsinghua.edu.cn --recv-keys 6ED0E7B82643E131 && \
+    apt-key adv --keyserver hkp://keyserver.tuna.tsinghua.edu.cn --recv-keys F8D2585B8783D481
 
 # 3. 导入 Debian 官方 GPG 密钥（清华源需使用官方密钥，密钥服务器用清华的）
 RUN apt-get update && \
