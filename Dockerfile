@@ -1,5 +1,12 @@
 FROM python:3.12-slim-bookworm
 
+
+# 导入Debian镜像的GPG密钥
+RUN apt-get update && apt-get install -y gnupg2 && \
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0E98404D386FA1D9 && \
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6ED0E7B82643E131 && \
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys F8D2585B8783D481
+
 # 替换系统源（根据基础镜像版本调整）
 RUN sed -i 's@deb.debian.org@mirrors.aliyun.com@g' /etc/apt/sources.list.d/debian.sources
 
