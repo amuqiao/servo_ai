@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from src.routers import router
-from src.routers import health_check, task_router, task_processor, vlm_ocr_router, user_router
+from src.routers import health_check, task_router, task_processor, vlm_ocr_router, user_router,power_plant
 from src.routers.ocr import ocr_router
 from src.configs import ApiConfig
 from src.configs.logging_config import setup_logging
@@ -29,6 +29,7 @@ app.include_router(task_processor.router)
 app.include_router(vlm_ocr_router.router)
 app.include_router(user_router.router)
 app.include_router(ocr_router.router)
+app.include_router(power_plant.router)
 
 # 初始化Celery配置
 @app.on_event('startup')
