@@ -1,22 +1,20 @@
 FROM python:3.12-slim-bookworm
 
 
-# 导入Debian镜像的GPG密钥
-RUN apt-get update && apt-get install -y gnupg2 && \
-    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0E98404D386FA1D9 && \
-    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6ED0E7B82643E131 && \
-    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys F8D2585B8783D481
-
 # 替换系统源（根据基础镜像版本调整）
-RUN sed -i 's@deb.debian.org@mirrors.aliyun.com@g' /etc/apt/sources.list.d/debian.sources
+# RUN sed -i 's@deb.debian.org@mirrors.aliyun.com@g' /etc/apt/sources.list.d/debian.sources
+
+RUN sed -i 's@deb.debian.org@mirrors.tuna.tsinghua.edu.cn@g' /etc/apt/sources.list.d/debian.sources
 
 
-# 设置工作目录为 /app
-# - 后续所有操作默认在此目录执行
-# - 保持容器内路径与开发环境一致
-WORKDIR /app
 
-# 安装必要的工具
+# 2. 写入清华源配置（覆盖官方源）
+RUN echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm main contrib non-free" > /etc/apt/sources.list && \
+    echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm-updates main contrib non-free" >> /etc/apt/sources.list && \
+    echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian-security bookworm-security main contrib non-free" >> /etc/apt/sources.list
+
+
+# 3. 导入 Debian 官方 GPG 密钥（清华源需使用官方密钥，密钥服务器用清华的）
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     busybox-static \
@@ -25,6 +23,11 @@ RUN apt-get update && \
     supervisor \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+# 设置工作目录为 /app
+# - 后续所有操作默认在此目录执行
+# - 保持容器内路径与开发环境一致
+WORKDIR /app
 
 # 创建Redis数据目录并设置权限
 RUN mkdir -p /var/lib/redis && \
@@ -37,6 +40,8 @@ COPY redis.conf /etc/redis/redis.conf
 # 复制Supervisor配置文件
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf 
 
+# ====================== 替换 Python 源为清华源 ======================
+# 复制依赖清单并安装（pip 源改为清华）
 # 复制依赖清单
 COPY requirements.txt /app/requirements.txt
 
