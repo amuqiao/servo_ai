@@ -7,7 +7,7 @@ import logging
 from src.models.ocr_model import OCRModel
 from src.configs.database import get_db_conn
 
-router = APIRouter(prefix="/api/ocr-records", tags=["OCR"])
+router = APIRouter(prefix="/api/ocr-records", tags=["OCR识别结果"])
 logger = logging.getLogger(__name__)
 
 class OCRDetailResponse(BaseModel):
