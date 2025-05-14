@@ -1,4 +1,4 @@
-from . import app
+from src.celery_app import app
 from celery import shared_task
 from src.configs import ApiConfig
 from urllib.parse import urlparse
@@ -15,10 +15,20 @@ import pytz
 
 logger = logging.getLogger("celery")
 
+
+@shared_task(name='celery_app.tasks.hourly_task')
+def hourly_task():
+
+    logger = logging.getLogger("celery.task")  # 使用Celery任务日志器
+    logger.info(f"定时任务 hourly_task 执行，时间：{datetime.now().isoformat()}")
+    return {"status": "success", "hourly_task_message": "hourly_task 执行完成"}
+
+
 @shared_task(name='celery_app.tasks.process_task')
 def process_task():
     # 示例任务逻辑
     return {"result": "Task processed successfully"}
+
 
 @shared_task(name='celery_app.tasks.create_redis_key_task')
 def create_redis_key_task(task_id: str):
@@ -30,8 +40,10 @@ def create_redis_key_task(task_id: str):
         logger.info(f"[Task {task_id}] Key stored successfully")
         return True
     except Exception as e:
-        logger.error(f"[Task {task_id}] Redis operation failed: {str(e)}", exc_info=True)
+        logger.error(
+            f"[Task {task_id}] Redis operation failed: {str(e)}", exc_info=True)
         return False
+
 
 def create_redis_key_task2(task_id: str):
     config = ApiConfig()
@@ -42,8 +54,10 @@ def create_redis_key_task2(task_id: str):
         logger.info(f"[Task {task_id}] Key stored successfully")
         return True
     except Exception as e:
-        logger.error(f"[Task {task_id}] Redis operation failed: {str(e)}", exc_info=True)
+        logger.error(
+            f"[Task {task_id}] Redis operation failed: {str(e)}", exc_info=True)
         return False
+
 
 @shared_task(name='celery_app.tasks.process_ocr_task', bind=True, max_retries=3)
 def process_ocr_task(self, task_key):
@@ -53,11 +67,11 @@ def process_ocr_task(self, task_key):
     try:
         redis_client = get_redis_client()
         data = redis_client.getdel(task_key)
-        
+
         if not data:
             logger.error(f"空任务数据 {task_key}")
             return
-            
+
         task_data = json.loads(data)
         record_id, url = next(iter(task_data.items()))
         logger.info(f"获取到OCR任务数据 ID:{record_id} URL:{url}")
@@ -75,11 +89,13 @@ def process_ocr_task(self, task_key):
             answer = json.loads(result['answer'])
         except (RuntimeError, json.JSONDecodeError) as e:
             logger.error(f"Dify服务调用失败: {str(e)}", exc_info=True)
-            logger.error(f"Dify响应格式异常 原始数据: {json.dumps(result, ensure_ascii=False)}")
+            logger.error(
+                f"Dify响应格式异常 原始数据: {json.dumps(result, ensure_ascii=False)}")
             raise self.retry(exc=e, countdown=60)
         except Exception as e:
             logger.error(f"OCR处理意外错误: {str(e)}", exc_info=True)
-            logger.error(f"Dify响应格式异常 原始数据: {json.dumps(result, ensure_ascii=False)}")
+            logger.error(
+                f"Dify响应格式异常 原始数据: {json.dumps(result, ensure_ascii=False)}")
             raise
 
         try:
@@ -89,7 +105,8 @@ def process_ocr_task(self, task_key):
                         SET ai_task_id = %s, ai_status = 1, ai_content=%s, update_time = %s 
                         WHERE id = %s"""
                     # cursor.execute(sql, (task_key, datetime.now(), record_id))
-                    cursor.execute(sql, (f"{task_key}_{self.request.id}", json.dumps(answer, ensure_ascii=False), datetime.now(pytz.timezone('Asia/Shanghai')), record_id))
+                    cursor.execute(sql, (f"{task_key}_{self.request.id}", json.dumps(
+                        answer, ensure_ascii=False), datetime.now(pytz.timezone('Asia/Shanghai')), record_id))
                     logger.debug(f"数据库更新成功 ID:{record_id}")
                 conn.commit()
         except Exception as db_error:
@@ -102,6 +119,7 @@ def process_ocr_task(self, task_key):
     except Exception as e:
         logger.error(f"任务处理失败 {task_key}: {str(e)}", exc_info=True)
         self.retry(countdown=2 ** self.request.retries)
+
 
 @app.on_after_finalize.connect
 def setup_periodic_tasks(sender, **kwargs):
@@ -116,6 +134,7 @@ def setup_periodic_tasks(sender, **kwargs):
         logger.error("定时任务配置失败: %s", str(e), exc_info=True)
         raise
 
+
 @shared_task(name='celery_app.tasks.scan_redis_tasks')
 def scan_redis_tasks():
     try:
@@ -123,7 +142,8 @@ def scan_redis_tasks():
         cursor = '0'
         total = 0
         while True:
-            cursor, keys = redis_client.scan(cursor, match='vlm_ocr_*', count=100)
+            cursor, keys = redis_client.scan(
+                cursor, match='vlm_ocr_*', count=100)
             if keys:
                 logger.info(f"扫描到{len(keys)}个待处理任务")
                 total += len(keys)

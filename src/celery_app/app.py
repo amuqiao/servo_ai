@@ -6,44 +6,54 @@ from src.configs.logging_config import setup_celery_logging, LogConfig
 
 
 class CeleryConfig(BaseSettings):
-    """Celery 配置类"""
+    """Celery 核心配置类（从环境变量或 .env 文件加载配置）"""
+    # 消息代理地址（用于任务队列）
     CELERY_BROKER_URL: str = "redis://localhost:6379/0"
+    # 结果存储地址（用于任务结果持久化）
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/0"
+    # 任务序列化格式（确保跨进程通信数据一致性）
     CELERY_TASK_SERIALIZER: str = "json"
+    # 允许接收的内容类型（限制客户端可发送的任务数据格式）
     CELERY_ACCEPT_CONTENT: list[str] = ["json"]
+    # 结果序列化格式（与任务序列化保持一致）
     CELERY_RESULT_SERIALIZER: str = "json"
-    CELERY_RESULT_EXPIRES: int = 3600  # 结果保存时间（秒）
-    CELERY_TIMEZONE: str = "Asia/Shanghai" # # 时间展示与转换：使用上海时区
-    CELERY_ENABLE_UTC: bool = True # 内部时间存储与计算：使用 UTC
+    # 任务结果过期时间（秒），自动清理旧结果释放存储
+    CELERY_RESULT_EXPIRES: int = 3600
+    # 时区设置（任务时间展示使用上海时区）
+    CELERY_TIMEZONE: str = "Asia/Shanghai"
+    # 内部时间存储使用 UTC（避免时区转换问题）
+    CELERY_ENABLE_UTC: bool = True
 
-    # 定时任务配置
+    # 定时任务调度配置（键为任务名称，值为任务详情）
     CELERY_BEAT_SCHEDULE: Dict[str, Any] = {
-        # 示例：每小时执行一次的任务
+        # 示例：每小时执行一次的任务（需在 tasks.py 中实现 hourly_task）
         "hourly-task": {
-            "task": "src.celery_app.tasks.hourly_task",
-            "schedule": 3600.0,  # 每小时执行
+            "task": "celery_app.tasks.hourly_task",  # 任务函数路径
+            "schedule": 3600.0,  # 调度间隔（秒）
         },
     }
 
     model_config = SettingsConfigDict(
-        env_prefix="CELERY_",  # 从环境变量加载配置时的前缀
-        env_file=".env",       # 环境变量文件
+        env_prefix="CELERY_",  # 环境变量前缀（如 CELERY_BROKER_URL 对应环境变量）
+        env_file=".env",       # 从 .env 文件加载配置
         env_file_encoding="utf-8",
-        extra="ignore"         # 新增：忽略未定义的额外字段
+        extra="ignore"         # 忽略未定义的额外环境变量（避免配置污染）
     )
 
 
+# 初始化 Celery 应用实例（参数为当前模块名）
 app = Celery(__name__)
 
-# 创建配置实例
+# 创建 Celery 配置实例（自动加载环境变量/.env 文件）
 config = CeleryConfig()
 
-# 创建日志配置实例
+# 创建日志配置实例（用于 Celery 日志系统初始化）
 log_config = LogConfig()
 
-# 设置Celery日志
+# 设置 Celery 日志（使用自定义日志配置，避免与 FastAPI 日志冲突）
 setup_celery_logging(log_config)
 
+# 将配置应用到 Celery 实例（覆盖默认配置）
 app.conf.update(
     broker_url=config.CELERY_BROKER_URL,
     result_backend=config.CELERY_RESULT_BACKEND,
@@ -54,8 +64,9 @@ app.conf.update(
     timezone=config.CELERY_TIMEZONE,
     enable_utc=config.CELERY_ENABLE_UTC,
     beat_schedule=config.CELERY_BEAT_SCHEDULE,
-    worker_hijack_root_logger=False,  # 避免 Celery 日志覆盖 FastAPI 日志
-    worker_redirect_stdouts=False  # 避免 Celery 重定向到标准输出
+    worker_hijack_root_logger=False,  # 禁止 Celery 覆盖根日志器（保留 FastAPI 日志）
+    worker_redirect_stdouts=False    # 禁止 Celery 重定向标准输出（避免日志混乱）
 )
 
+# 自动发现任务模块（从 src.celery_app 包中查找 tasks.py 和 test_tasks.py 文件注册任务）
 app.autodiscover_tasks(packages=['src.celery_app'], related_name='tasks')
