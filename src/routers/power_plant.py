@@ -10,14 +10,14 @@ class PowerNumberResponse(BaseModel):
     data: list[str]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class BasePlantResponse(BaseModel):
     data: list[dict]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 router = APIRouter(prefix="/api/power-plants", tags=["电站管理"])
 

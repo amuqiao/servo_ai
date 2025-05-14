@@ -24,7 +24,7 @@ class OCRDetailResponse(BaseModel):
     batch_no: Optional[str] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 @router.get("", response_model=list[OCRDetailResponse])
 async def get_ocr_records_by_business_ids(

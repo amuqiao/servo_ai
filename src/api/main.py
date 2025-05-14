@@ -3,21 +3,24 @@ from src.routers import router
 from src.routers import health_check, task_router, task_processor, vlm_ocr_router, user_router,power_plant
 from src.routers.ocr import ocr_router
 from src.configs import ApiConfig
-from src.configs.logging_config import setup_logging
+from src.configs.logging_config import setup_logging, LogConfig
 from src.celery_app import app as celery_app
 from src.configs.celery_config import beat_schedule
 
 import sys, os
 import logging
 
-logger = logging.getLogger(__name__)
-logger.debug(f"当前工作目录：{os.getcwd()}")
-logger.debug(f"Python路径：{sys.path}")
 
-setup_logging()
+
+# 获取特定模块的日志器
+logger = logging.getLogger(__name__)
 config = ApiConfig()
 
 app = FastAPI(title="ServoAI_API", version="1.0.0")
+
+# 配置日志
+config = LogConfig(LOGGING_LEVEL=logging.INFO)
+setup_logging(app)
 
 # 注册路由模块 todo 这里为什么要注册router呢？
 app.include_router(router)

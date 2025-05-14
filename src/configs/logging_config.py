@@ -1,78 +1,74 @@
 import os
-import pytz
-from datetime import datetime
 import logging
-import tempfile
 from logging.handlers import RotatingFileHandler
+from pydantic_settings import BaseSettings
+from fastapi import FastAPI
 from typing import Optional
-from src.configs import ApiConfig
 
-def setup_logging() -> Optional[logging.Logger]:
+class LogConfig(BaseSettings):
+    """日志配置类"""
+    LOGGING_LEVEL: int = logging.INFO  # 默认日志级别
+    LOG_DIR: str = "logs"  # 日志文件存储目录
+    LOG_FILE_MAX_SIZE: int = 10 * 1024 * 1024  # 单个日志文件最大大小 (10MB)
+    LOG_FILE_BACKUP_COUNT: int = 5  # 日志文件备份数量
+    LOG_FORMAT: str = "%(asctime)s %(levelname)s [%(name)s] [%(filename)s:%(lineno)d] - %(message)s"  # 日志格式
+
+def setup_logging(app: Optional[FastAPI] = None, config: Optional[LogConfig] = None) -> None:
     """
-    配置符合FastAPI规范的日志系统
-    包含文件滚动记录和控制台输出，日志格式符合RESTful规范
+    设置 FastAPI 应用的日志系统
+    
+    Args:
+        app: FastAPI 应用实例，如果提供则为其设置日志
+        config: 日志配置对象
     """
-
-    config = ApiConfig()
-    log_level = config.LOG_LEVEL.upper()
-    log_dir = config.LOG_DIR
-
-    # 打印日志目录路径，用于调试
-    print(f"log_level: {log_level}")  # 打印日志级别，用于调试
-    print(f"log_dir: {log_dir}")  # 打印日志目录，用于调试
+    # 如果未提供配置，使用默认配置
+    if config is None:
+        config = LogConfig()
+     
+    # 创建日志目录（如果不存在）
+    os.makedirs(config.LOG_DIR, exist_ok=True)
     
-    # 尝试创建日志目录，失败则使用临时目录
-    try:
-        os.makedirs(log_dir, exist_ok=True)
-    except PermissionError:
-        log_dir = os.path.join('/tmp', 'servoai_logs')
-        os.makedirs(log_dir, exist_ok=True)
-        logging.warning(f"Using temporary log directory: {log_dir}")
-    log_format = config.LOG_FORMAT or (
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    # 设置日志格式
+    formatter = logging.Formatter(config.LOG_FORMAT)
+    
+    # 创建控制台处理器
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    
+    # 创建文件处理器（按大小分割）
+    file_handler = RotatingFileHandler(
+        os.path.join(config.LOG_DIR, "app.log"),
+        maxBytes=config.LOG_FILE_MAX_SIZE,
+        backupCount=config.LOG_FILE_BACKUP_COUNT
     )
-    date_format = config.LOG_DATE_FORMAT or (
-        "%Y-%m-%d %H:%M:%S"
-    )
-    timezone = pytz.timezone(config.LOG_TIMEZONE or "Asia/Shanghai")
-
-    class ShanghaiTimeFormatter(logging.Formatter):
-        def converter(self, timestamp):
-            return datetime.fromtimestamp(timestamp, timezone).timetuple()
+    file_handler.setFormatter(formatter)
     
-    # 确保日志目录存在
-    os.makedirs(log_dir, exist_ok=True)
+    # 配置根日志器
+    root_logger = logging.getLogger()
+    root_logger.handlers.clear()  # 移除默认处理器
+    root_logger.setLevel(config.LOGGING_LEVEL)
+    root_logger.addHandler(console_handler)
+    root_logger.addHandler(file_handler)
     
-    # 初始化根日志记录器
-    logger = logging.getLogger()
-    logger.setLevel(log_level)
+    # 配置 FastAPI 特定日志器
+    uvicorn_access_logger = logging.getLogger("uvicorn.access")
+    uvicorn_access_logger.handlers.clear()
+    uvicorn_access_logger.addHandler(file_handler)
+    uvicorn_access_logger.setLevel(config.LOGGING_LEVEL)
     
-    # 清除已有处理器避免重复
-    if logger.handlers:
-        logger.handlers.clear()
-
-    try:
-        # 文件处理器（带滚动）
-        file_handler = RotatingFileHandler(
-            filename=os.path.join(log_dir, "servoai-api.log"),
-            maxBytes=int(config.LOG_FILE_MAX_SIZE) * 1024 * 1024,  # 默认10MB
-            backupCount=int(config.LOG_FILE_BACKUP_COUNT)  # 默认保留5个备份
-        )
-        file_formatter = logging.Formatter(log_format, datefmt=date_format)
-        file_handler.setFormatter(file_formatter)
-        logger.addHandler(file_handler)
-
-        # 控制台处理器
-        console_handler = logging.StreamHandler()
-        console_formatter = logging.Formatter(log_format, datefmt=date_format)
-        console_handler.setFormatter(console_formatter)
-        logger.addHandler(console_handler)
-
-        # 设置第三方库日志级别
-        logging.getLogger("uvicorn.access").handlers = logger.handlers
-        logging.getLogger("uvicorn").setLevel(log_level)
+    # 如果提供了 FastAPI 应用实例，添加启动和关闭事件
+    if app:
+        @app.on_event("startup")
+        def startup_logging() -> None:
+            logging.info("FastAPI 应用启动成功")
         
-        return logger
-    except Exception as e:
-        print(f"日志初始化失败: {str(e)}")
-        return None
+        @app.on_event("shutdown")
+        def shutdown_logging() -> None:
+            logging.info("FastAPI 应用优雅关闭")
+
+# 使用示例
+if __name__ == "__main__":
+    # 测试日志配置
+    setup_logging()
+    logger = logging.getLogger(__name__)
+    logger.info("测试日志输出")

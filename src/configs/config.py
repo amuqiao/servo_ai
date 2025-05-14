@@ -2,17 +2,6 @@ from pydantic_settings import BaseSettings
 from pydantic import Field
 
 class ApiConfig(BaseSettings):
-   
-    LOG_LEVEL: str = Field(default="INFO", env="LOG_LEVEL")
-    LOG_DIR: str = Field(default="./logs", env="LOG_DIR")
-    LOG_FORMAT: str = Field(
-        default="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        env="LOG_FORMAT"
-    )
-    LOG_DATE_FORMAT: str = Field(default="%Y-%m-%d %H:%M:%S", env="LOG_DATE_FORMAT")
-    LOG_FILE_MAX_SIZE: int = Field(default=10, env="LOG_FILE_MAX_SIZE")
-    LOG_FILE_BACKUP_COUNT: int = Field(default=3, env="LOG_FILE_BACKUP_COUNT")
-    LOG_TIMEZONE: str = Field(default="Asia/Shanghai", env="LOG_TIMEZONE")
     
     DIFY_BASE_URL: str = Field(..., env="DIFY_BASE_URL")  # 例：http://xuntian-ai-sit.tclpv.com
     DIFY_API_KEY: str = Field(..., env="DIFY_API_KEY")   # 例：app-FpC7jmVhoS90BTUSfCxsm0gG
