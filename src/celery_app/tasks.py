@@ -13,9 +13,7 @@ from src.routers.vlm_ocr_router import get_dify_client
 from src.configs.logging_config import setup_logging
 import pytz
 
-setup_logging()
-
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("celery")
 
 @shared_task(name='celery_app.tasks.process_task')
 def process_task():
@@ -49,8 +47,8 @@ def create_redis_key_task2(task_id: str):
 
 @shared_task(name='celery_app.tasks.process_ocr_task', bind=True, max_retries=3)
 def process_ocr_task(self, task_key):
-    logger = logging.getLogger(__name__)
-    logger.debug(f"开始处理OCR任务: {task_key}")
+
+    logger.info(f"开始处理OCR任务: {task_key}")
     config = ApiConfig()
     try:
         redis_client = get_redis_client()
@@ -107,7 +105,6 @@ def process_ocr_task(self, task_key):
 
 @app.on_after_finalize.connect
 def setup_periodic_tasks(sender, **kwargs):
-    logger = logging.getLogger(__name__)
     try:
         logger.info("注册定时任务: %s (间隔 %.1f 秒)", 'scan redis tasks', 60.0)
         sender.add_periodic_task(
@@ -121,7 +118,6 @@ def setup_periodic_tasks(sender, **kwargs):
 
 @shared_task(name='celery_app.tasks.scan_redis_tasks')
 def scan_redis_tasks():
-    logger = logging.getLogger(__name__)
     try:
         redis_client = get_redis_client()
         cursor = '0'
@@ -136,6 +132,7 @@ def scan_redis_tasks():
                 process_ocr_task.apply_async(args=(key,))
             if cursor == 0:
                 break
-        logger.info(f"本轮共发现{total}个待处理任务")
+        if total > 0:
+            logger.info(f"本轮共发现{total}个待处理任务")
     except Exception as e:
         logger.error(f"任务扫描异常: {str(e)}", exc_info=True)

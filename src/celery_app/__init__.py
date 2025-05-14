@@ -1,9 +1,3 @@
-from celery import Celery
-import os
+from src.celery_app.app import app
 
-app = Celery(__name__)
-
-app.autodiscover_tasks(packages=['src.celery_app'], related_name='tasks')
-
-
-
+__all__ = ["app"]

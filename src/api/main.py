@@ -5,7 +5,6 @@ from src.routers.ocr import ocr_router
 from src.configs import ApiConfig
 from src.configs.logging_config import setup_logging, LogConfig
 from src.celery_app import app as celery_app
-from src.configs.celery_config import beat_schedule
 
 import sys, os
 import logging
@@ -35,31 +34,31 @@ app.include_router(ocr_router.router)
 app.include_router(power_plant.router)
 
 # 初始化Celery配置
-@app.on_event('startup')
-async def init_celery():
-    logger.info("正在初始化Celery配置...")
-    try:
-        config_params = {
-            "broker": ApiConfig().CELERY_BROKER_URL[:25] + '*****',
-            "backend": ApiConfig().CELERY_RESULT_BACKEND[:20] + '*****',
-            "task_serializer": 'json',
-            "result_expires": 3600
-        }
-        logger.debug(f"Celery配置参数: {config_params}")
+# @app.on_event('startup')
+# async def init_celery():
+#     logger.info("正在初始化Celery配置...")
+#     try:
+#         config_params = {
+#             "broker": ApiConfig().CELERY_BROKER_URL[:25] + '*****',
+#             "backend": ApiConfig().CELERY_RESULT_BACKEND[:20] + '*****',
+#             "task_serializer": 'json',
+#             "result_expires": 3600
+#         }
+#         logger.debug(f"Celery配置参数: {config_params}")
         
-        celery_app.conf.update(
-            broker_url=ApiConfig().CELERY_BROKER_URL,
-            backend=ApiConfig().CELERY_RESULT_BACKEND,
-            task_serializer='json',
-            accept_content=['json'],
-            result_serializer='json',
-            beat_schedule=beat_schedule,
-            result_expires=3600,
-        )
-        logger.info("Celery配置成功")
-    except Exception as e:
-        logger.error("Celery初始化失败", exc_info=True)
-        raise
+#         celery_app.conf.update(
+#             broker_url=ApiConfig().CELERY_BROKER_URL,
+#             backend=ApiConfig().CELERY_RESULT_BACKEND,
+#             task_serializer='json',
+#             accept_content=['json'],
+#             result_serializer='json',
+#             beat_schedule=beat_schedule,
+#             result_expires=3600,
+#         )
+#         logger.info("Celery配置成功")
+#     except Exception as e:
+#         logger.error("Celery初始化失败", exc_info=True)
+#         raise
     
 @app.get("/")
 async def root():
