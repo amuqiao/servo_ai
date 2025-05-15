@@ -5,6 +5,7 @@ from typing import Dict, Any
 from src.configs.logging_config import setup_celery_logging, LogConfig
 
 
+
 class CeleryConfig(BaseSettings):
     """Celery 核心配置类（从环境变量或 .env 文件加载配置）"""
     # 消息代理地址（用于任务队列）
@@ -29,7 +30,11 @@ class CeleryConfig(BaseSettings):
         # 示例：每小时执行一次的任务（需在 tasks.py 中实现 hourly_task）
         "hourly-task": {
             "task": "celery_app.tasks.hourly_task",  # 任务函数路径
-            "schedule": 3600.0,  # 调度间隔（秒）
+            "schedule": 24*60*60,  # 调度间隔（秒）
+        },
+        "hourly2-task": {
+            "task": "celery_app.test_tasks.hourly2_task",  # 任务函数路径
+            "schedule": 24*60*60,  # 调度间隔（秒）
         },
     }
 
@@ -68,5 +73,7 @@ app.conf.update(
     worker_redirect_stdouts=False    # 禁止 Celery 重定向标准输出（避免日志混乱）
 )
 
-# 自动发现任务模块（从 src.celery_app 包中查找 tasks.py 和 test_tasks.py 文件注册任务）
+# 自动发现任务模块（从 src.celery_app 包中查找 tasks.py 
 app.autodiscover_tasks(packages=['src.celery_app'], related_name='tasks')
+# 额外扫描 test_tasks.py（通过模块名匹配）
+app.autodiscover_tasks(packages=['src.celery_app'], related_name='test_tasks')

@@ -56,18 +56,6 @@ def setup_logging(app: Optional[FastAPI] = None, config: Optional[LogConfig] = N
     uvicorn_access_logger.addHandler(file_handler)
     uvicorn_access_logger.setLevel(config.LOGGING_LEVEL)
     
-    # # 新增：配置 Celery 特定日志器
-    # celery_logger = logging.getLogger("celery")
-    # celery_logger.handlers.clear()
-    # celery_file_handler = RotatingFileHandler(
-    #     os.path.join(config.LOG_DIR, "celery.log"),  # 单独文件名
-    #     maxBytes=config.LOG_FILE_MAX_SIZE,
-    #     backupCount=config.LOG_FILE_BACKUP_COUNT
-    # )
-    # celery_file_handler.setFormatter(formatter)
-    # celery_logger.addHandler(celery_file_handler)
-    # celery_logger.setLevel(config.LOGGING_LEVEL)
-    
     # 如果提供了 FastAPI 应用实例，添加启动和关闭事件
     if app:
         @app.on_event("startup")
