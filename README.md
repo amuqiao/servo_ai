@@ -25,4 +25,14 @@ celery -A src.celery_app:app worker
 logs/
 ```
 
+# docker启动服务
+## 构建镜像
+```bash
+# 指定版本号，默认为v1.0.x
+docker build -t servo_ai_api:v1.0.x .
+
+## 启动容器
+docker run -p 8000:8000 servo_ai_api:1.0.x supervisord -n -c /etc/supervisor/conf.d/supervisord.conf 
+```
+
 
