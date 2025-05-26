@@ -34,5 +34,8 @@ docker build -t servo_ai_api:v1.0.x .
 ## 启动容器
 docker run -p 8000:8000 servo_ai_api:1.0.x supervisord -n -c /etc/supervisor/conf.d/supervisord.conf 
 ```
+## 查看容器日志
+```
+```
 
 
