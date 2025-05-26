@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from src.models.power_plant_model import PowerPlantModel
+from src.models.power_plant_model import PompPowerPlantBasic
 from src.configs.database import get_db_conn
 from pydantic import BaseModel
 import logging  # 新增：导入日志模块
@@ -52,11 +52,11 @@ def get_base_power_plant_query():
     返回：包含id、power_number、company_id、company_name、province的SQLAlchemy查询对象
     """
     return select(
-        PowerPlantModel.id,
-        PowerPlantModel.power_number,
-        PowerPlantModel.company_id,
-        PowerPlantModel.company_name,
-        PowerPlantModel.province
+        PompPowerPlantBasic.id,
+        PompPowerPlantBasic.power_number,
+        PompPowerPlantBasic.company_id,
+        PompPowerPlantBasic.company_name,
+        PompPowerPlantBasic.province
     )
 
 
@@ -69,7 +69,7 @@ async def get_power_numbers(company_id: int, db: Session = Depends(get_db_conn))
     logger.info(f"开始处理获取电站编号请求，公司ID：{company_id}")  # 新增：记录处理开始
     try:
         query = get_base_power_plant_query().where(
-            PowerPlantModel.company_id == company_id
+            PompPowerPlantBasic.company_id == company_id
         )
         result = db.execute(query)
         plants = [PowerPlantInfo(**row._asdict()) for row in result]
@@ -96,12 +96,12 @@ async def get_companies_by_provinces(
 
     try:
         query = get_base_power_plant_query().where(
-            PowerPlantModel.province.in_(provinces),
-            PowerPlantModel.company_id.isnot(None),
-            PowerPlantModel.company_name.isnot(None)
+            PompPowerPlantBasic.province.in_(provinces),
+            PompPowerPlantBasic.company_id.isnot(None),
+            PompPowerPlantBasic.company_name.isnot(None)
         ).group_by(
-            PowerPlantModel.company_id,
-            PowerPlantModel.company_name
+            PompPowerPlantBasic.company_id,
+            PompPowerPlantBasic.company_name
         )
         result = db.execute(query)
         plants = [PowerPlantInfo(**row._asdict()) for row in result]
@@ -125,9 +125,9 @@ async def get_plants(limit: int = 10, db: Session = Depends(get_db_conn)):
 
     try:
         query = get_base_power_plant_query().where(
-            PowerPlantModel.company_id.isnot(None),
-            PowerPlantModel.company_name.isnot(None),
-            PowerPlantModel.province.isnot(None)
+            PompPowerPlantBasic.company_id.isnot(None),
+            PompPowerPlantBasic.company_name.isnot(None),
+            PompPowerPlantBasic.province.isnot(None)
         ).limit(limit)
         result = db.execute(query)
         plants = [PowerPlantInfo(**row._asdict()) for row in result]

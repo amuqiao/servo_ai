@@ -1,8 +1,8 @@
 from sqlalchemy import Column, String, Integer
 from src.configs.database import Base
 
-
-class PowerPlantModel(Base):
+# PowerPlantModel
+class PompPowerPlantBasic(Base):
     __tablename__ = 'pomp_power_plant_basic'
 
     id = Column(String(50), primary_key=True, comment='电站ID')

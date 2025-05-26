@@ -46,7 +46,7 @@ def get_db_engine():
         return create_engine(
             connection_url, 
             pool_pre_ping=True,
-            echo=True,
+            echo=False,
             **pool_config
         )
     except Exception as e:
