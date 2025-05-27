@@ -25,7 +25,7 @@ def get_db_engine():
             "database": config.DB_NAME
         }
         
-        logger.debug(
+        logger.info(
             "正在初始化数据库连接，驱动：%s,主机：%s, 端口：%s, 数据库：%s, 用户：%s",
             connection_dict["drivername"],
             connection_dict["host"],
