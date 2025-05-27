@@ -12,48 +12,41 @@ logger = logging.getLogger("celery")
 
 class OCRService:
     @staticmethod
+    async def _base_fetch_ocr_records(db: Session, business_ids: list[str] = None, limit: int = None):
+        """
+        基础OCR记录查询方法（抽象公共查询逻辑）
+        :param db: 数据库会话
+        :param business_ids: 业务ID列表（可选过滤条件）
+        :param limit: 限制数量（可选）
+        :return: OCR记录列表
+        """
+        # 公共条件：AI状态未完成或为空
+        query = db.query(OCRModel).filter(
+            or_(OCRModel.ai_status != 1, OCRModel.ai_status == None)
+        )
+
+        # 业务ID过滤（可选）
+        if business_ids:
+            query = query.filter(OCRModel.business_id.in_(business_ids))
+        
+        # 数量限制（可选）
+        if limit is not None:
+            query = query.limit(limit)
+        
+        return query.all()
+
+    @staticmethod
     async def fetch_ocr_records(limit: int, db: Session):
-        """
-        获取指定数量的待处理OCR记录（AI状态未完成或为空）
-        :param limit: 需要获取的记录数量上限
-        :param db: 数据库会话对象（通过依赖注入获取）
-        :return: OCR记录列表（ORM对象）
-        """
-        try:
-            logger.info(f"开始查询待处理OCR记录，限制数量：{limit}")
-            # 使用ORM查询：筛选AI状态不为1或为空的记录，按限制数量获取
-            records = db.query(OCRModel).filter(
-                or_(OCRModel.ai_status != 1, OCRModel.ai_status == None)
-            ).limit(limit).all()
-            logger.info(f"成功获取{len(records)}条待处理OCR记录")
-            return records
-        except Exception as e:
-            logger.error(f"查询待处理OCR记录失败，限制数量：{limit}，错误详情：{str(e)}", exc_info=True)
-            raise HTTPException(status_code=500, detail=f"数据库查询失败：{str(e)}")
+        """获取指定数量的待处理OCR记录（调用基础查询方法）"""
+        return await OCRService._base_fetch_ocr_records(db, limit=limit)
 
     @staticmethod
     async def fetch_ocr_records_by_business_ids(business_ids: list[str], db: Session):
-        """
-        根据业务ID列表获取待处理的OCR记录
-        :param business_ids: 业务ID列表（如电厂编号）
-        :param db: 数据库会话对象
-        :return: 匹配的OCR记录列表（ORM对象）
-        """
+        """根据业务ID列表获取待处理OCR记录（调用基础查询方法）"""
         if not business_ids:
             logger.warning("传入的业务ID列表为空，无法查询OCR记录")
             raise HTTPException(status_code=400, detail="业务ID列表不能为空")
-        try:
-            logger.info(f"开始根据业务ID查询OCR记录，业务ID数量：{len(business_ids)}")
-            # 使用ORM查询：筛选指定业务ID且AI状态未完成的记录
-            records = db.query(OCRModel).filter(
-                OCRModel.business_id.in_(business_ids),
-                or_(OCRModel.ai_status != 1, OCRModel.ai_status == None)
-            ).all()
-            logger.info(f"成功获取{len(records)}条匹配业务ID的OCR记录")
-            return records
-        except Exception as e:
-            logger.error(f"业务ID查询OCR记录失败，业务ID列表：{business_ids}，错误详情：{str(e)}", exc_info=True)
-            raise HTTPException(status_code=500, detail=f"业务ID查询失败：{str(e)}")
+        return await OCRService._base_fetch_ocr_records(db, business_ids=business_ids)
 
     @staticmethod
     async def fetch_business_ids_by_company_ids(company_ids: list[str], db: Session):
@@ -80,14 +73,31 @@ class OCRService:
             raise HTTPException(status_code=500, detail=f"公司ID查询失败：{str(e)}")
 
     @staticmethod
-    def update_ai_result(record_id: int, ai_task_id: str, ai_content: list, db: Session):
+    async def fetch_ocr_records_by_company_ids(company_ids: list[str], db: Session):
+        """
+        根据公司ID列表获取关联的待处理OCR记录（整合公司ID→业务ID→记录的流程）
+        :param company_ids: 公司ID列表
+        :param db: 数据库会话对象
+        :return: 关联的OCR记录列表（ORM对象）
+        """
+        if not company_ids:
+            logger.warning("传入的公司ID列表为空，无法查询OCR记录")
+            raise HTTPException(status_code=400, detail="公司ID列表不能为空")
+        
+        # 步骤1：获取公司关联的业务ID
+        business_ids = await OCRService.fetch_business_ids_by_company_ids(company_ids, db)
+        if not business_ids:
+            logger.info("未找到公司ID关联的业务ID")
+            return []
+        
+        # 步骤2：根据业务ID获取待处理记录
+        records = await OCRService.fetch_ocr_records_by_business_ids(business_ids, db)
+        return records
+
+    @staticmethod
+    def update_ai_result(record_id: int, ai_task_id: str, ai_content: list, ai_status: int, db: Session):  # 新增ai_status参数
         """
         更新OCR记录的AI处理结果（支持多URL识别结果列表）
-        :param record_id: OCR记录ID
-        :param ai_task_id: Celery任务ID
-        :param ai_content: AI识别结果列表（格式：[{'url': 'xxx', 'content': 'xxx'}, ...]）
-        :param db: 数据库会话对象
-        :return: 更新后的OCR记录（ORM对象）
         """
         logger.info(f"开始更新OCR记录，记录ID：{record_id}，任务ID：{ai_task_id}")
         ocr_record = db.query(OCRModel).filter(OCRModel.id == record_id).first()
@@ -96,19 +106,33 @@ class OCRService:
             raise ValueError("OCR记录不存在")
         
         try:
-            # 更新字段：任务ID、状态、识别结果（列表转JSON字符串）、更新时间
             ocr_record.ai_task_id = ai_task_id
-            ocr_record.ai_status = 1  # 标记为处理成功
-            ocr_record.ai_content = json.dumps(ai_content, ensure_ascii=False)  # 保留中文字符
-            ocr_record.update_time = datetime.now(pytz.timezone('Asia/Shanghai'))  # 带时区的当前时间
+            ocr_record.ai_status = ai_status  # 使用传入的状态值
+            ocr_record.ai_content = json.dumps(ai_content, ensure_ascii=False)
+            ocr_record.update_time = datetime.now(pytz.timezone('Asia/Shanghai'))
             db.commit()
-            db.refresh(ocr_record)  # 刷新对象获取最新数据
+            db.refresh(ocr_record)
             logger.info(f"OCR记录更新成功，记录ID：{record_id}")
             return ocr_record
         except Exception as e:
             db.rollback()  # 异常时回滚事务
             logger.error(f"OCR记录更新失败，记录ID：{record_id}，错误详情：{str(e)}", exc_info=True)
             raise HTTPException(status_code=500, detail=f"记录更新失败：{str(e)}")
+
+    @staticmethod
+    def check_need_ocr(record_id: int, db: Session) -> bool:
+        """
+        检查OCR记录是否需要执行识别（ai_status不为1时需要）
+        :param record_id: OCR记录ID
+        :param db: 数据库会话对象
+        :return: 需要识别返回True，否则返回False
+        """
+        logger.debug(f"检查OCR记录是否需要识别，记录ID：{record_id}")
+        ocr_record = OCRService.get_ocr_record(record_id, db)
+        if not ocr_record:
+            logger.error(f"未找到OCR记录，记录ID：{record_id}")
+            raise ValueError("OCR记录不存在")
+        return ocr_record.ai_status != 1  # ai_status=1时无需处理
 
     @staticmethod
     def get_ocr_record(record_id: int, db: Session):

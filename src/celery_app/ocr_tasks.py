@@ -41,39 +41,51 @@ def process_ocr_task(self, task_key: str) -> bool:
         record_id = int(record_id_str)
         logger.info(f"成功获取OCR任务数据，记录ID：{record_id}，待处理URL数量：{len(urls)}")
 
-        # 3. 调用Dify客户端处理每个URL的OCR识别
-        dify_client = get_dify_client()
-        results = []  # 存储每个URL的OCR结果（格式：[{'url': url, 'content': 识别内容}, ...]）
-        for url in urls:
-            try:
-                logger.debug(f"开始处理URL：{url}，记录ID：{record_id}")
-                # 调用Dify API识别图片内容
-                result = dify_client.send_message(
-                    query="分析图片内容",
-                    user="anonymous",
-                    file_source=config.DIDY_OCR_BASE_URL + url,
-                    transfer_method="remote_url"
-                )
-                answer = json.loads(result['answer'])  # 解析识别结果
-                results.append({"url": url, "content": answer})  # 收集单条结果
-                logger.info(f"URL处理成功，URL：{url}，记录ID：{record_id}")
-            except Exception as e:
-                logger.error(f"URL处理失败，URL：{url}，记录ID：{record_id}，错误详情：{str(e)}", exc_info=True)
-                # 单个URL失败不中断整体任务，继续处理后续URL
-
-        # 4. 更新数据库OCR结果
-        logger.debug(f"准备更新数据库，记录ID：{record_id}，任务键：{task_key}")
-        db_generator = get_db_conn()  # 获取数据库连接生成器
-        db = next(db_generator)  # 提取数据库会话
+        # 获取数据库会话（提前获取用于状态检查）
+        db_generator = get_db_conn()
+        db = next(db_generator)
         try:
-            # 调用OCR服务更新结果（包含多个URL的识别内容）
+            # 新增：检查是否需要执行OCR识别（ai_status=1时跳过）
+            need_ocr = OCRService.check_need_ocr(record_id, db)
+            if not need_ocr:
+                logger.info(f"OCR记录已处理成功，跳过识别，记录ID：{record_id}")
+                RedisTaskService.delete_task_key(task_key)  # 清理任务键
+                logger.info(f"任务提前完成并清理，任务键：{task_key}，记录ID：{record_id}")
+                return True
+
+            # 3. 调用Dify客户端处理每个URL的OCR识别（仅当需要处理时执行）
+            dify_client = get_dify_client()
+            results = []
+            all_url_success = True  # 跟踪所有URL是否处理成功
+            for url in urls:
+                try:
+                    logger.debug(f"开始处理URL：{url}，记录ID：{record_id}")
+                    # 调用Dify API识别图片内容
+                    result = dify_client.send_message(
+                        query="分析图片内容",
+                        user="anonymous",
+                        file_source=config.DIDY_OCR_BASE_URL + url,
+                        transfer_method="remote_url"
+                    )
+                    answer = json.loads(result['answer'])  # 解析识别结果
+                    results.append({"url": url, "content": answer})
+                    logger.info(f"URL处理成功，URL：{url}，记录ID：{record_id}")
+                except Exception as e:
+                    all_url_success = False  # 任意URL失败则标记整体失败
+                    logger.error(f"URL处理失败，URL：{url}，记录ID：{record_id}，错误详情：{str(e)}", exc_info=True)
+                    break  # 失败时终止遍历，不再处理后续URL
+
+            # 4. 更新数据库OCR结果（传递实际状态）
+            logger.debug(f"准备更新数据库，记录ID：{record_id}，任务键：{task_key}")
+            ai_status = 1 if all_url_success else -1
             OCRService.update_ai_result(
                 record_id=record_id,
-                ai_task_id=f"{task_key}_{self.request.id}",  # 组合任务ID（Redis键+Celery任务ID）
-                ai_content=results,  # 传递列表格式的识别结果
+                ai_task_id=f"{task_key}_{self.request.id}",
+                ai_content=results,
+                ai_status=ai_status,  # 新增参数传递状态
                 db=db
             )
-            db.commit()  # 提交事务
+            db.commit()
             logger.info(f"数据库更新成功，记录ID：{record_id}，任务键：{task_key}")
         finally:
             db.close()  # 手动关闭会话
@@ -96,9 +108,10 @@ def setup_periodic_tasks(sender, **kwargs):
     注册Celery定时任务：定期扫描Redis中的OCR待处理任务
     """
     try:
-        logger.info("注册定时任务：扫描Redis OCR任务（间隔10秒）")
+        config = ApiConfig()  # 加载配置
+        logger.info(f"注册定时任务：扫描Redis OCR任务（间隔{config.CELERY_SCAN_TASKS_INTERVAL}秒）")
         sender.add_periodic_task(
-            10.0,  # 每10秒执行一次
+            config.CELERY_SCAN_TASKS_INTERVAL,  # 使用环境变量配置的间隔时间
             scan_redis_tasks.s(),  # 绑定扫描任务
             name='scan redis tasks'  # 任务名称
         )

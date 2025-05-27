@@ -1,14 +1,14 @@
 from fastapi import FastAPI
 from src.routers import router
-from src.routers import health_check, task_router, task_processor, vlm_ocr_router, user_router,power_plant
-from src.routers.ocr import ocr_router
+from src.routers import health_check, task_router, vlm_ocr_router, user_router, power_plant
+from src.routers.ocr import ocr_record_router, ocr_task_router
 from src.configs import ApiConfig
 from src.configs.logging_config import setup_logging, LogConfig
 from src.celery_app import app as celery_app
 
-import sys, os
+import sys
+import os
 import logging
-
 
 
 # 获取特定模块的日志器
@@ -27,10 +27,10 @@ app.include_router(router)
 # 注册所有路由
 app.include_router(health_check.router)
 app.include_router(task_router.router)
-app.include_router(task_processor.router)
+app.include_router(ocr_record_router.router)
+app.include_router(ocr_task_router.router)
 app.include_router(vlm_ocr_router.router)
 app.include_router(user_router.router)
-app.include_router(ocr_router.router)
 app.include_router(power_plant.router)
 
 # 初始化Celery配置
@@ -45,7 +45,7 @@ app.include_router(power_plant.router)
 #             "result_expires": 3600
 #         }
 #         logger.debug(f"Celery配置参数: {config_params}")
-        
+
 #         celery_app.conf.update(
 #             broker_url=ApiConfig().CELERY_BROKER_URL,
 #             backend=ApiConfig().CELERY_RESULT_BACKEND,
@@ -59,7 +59,8 @@ app.include_router(power_plant.router)
 #     except Exception as e:
 #         logger.error("Celery初始化失败", exc_info=True)
 #         raise
-    
+
+
 @app.get("/")
 async def root():
     return "Hello world2"
