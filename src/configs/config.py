@@ -21,7 +21,9 @@ class ApiConfig(BaseSettings):
     REDIS_MODE: str = Field(default='single', env='REDIS_MODE')
     CELERY_BROKER_URL: str = Field(env='CELERY_BROKER_URL')
     CELERY_RESULT_BACKEND: str = Field(env='CELERY_RESULT_BACKEND')
-
+    # 扫描Redis任务的间隔时间（单位：秒）
+    CELERY_SCAN_TASKS_INTERVAL: float = Field(default=10.0, env="CELERY_SCAN_TASKS_INTERVAL")  
+    
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

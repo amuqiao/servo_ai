@@ -74,6 +74,7 @@ app.conf.update(
 )
 
 # 自动发现任务模块（从 src.celery_app 包中查找 tasks.py 
-app.autodiscover_tasks(packages=['src.celery_app'], related_name='tasks')
+# app.autodiscover_tasks(packages=['src.celery_app'], related_name='tasks')
 # 额外扫描 test_tasks.py（通过模块名匹配）
 app.autodiscover_tasks(packages=['src.celery_app'], related_name='test_tasks')
+app.autodiscover_tasks(packages=['src.celery_app'], related_name='ocr_tasks')

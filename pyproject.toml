@@ -3,18 +3,16 @@ name = "api"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = "==3.12"
+requires-python = "==3.12.0"
 dependencies = [
-    "celery>=5.3.0",
-    "cryptography>=44.0.2",
+    "celery>=5.5.2",
     "fastapi[standard]>=0.112.2",
-    "kafka-python==2.0.2",
     "pydantic-settings>=2.9.1",
     "pymysql>=1.1.1",
     "pytz>=2025.2",
-    "redis==4.6.0",
+    "redis>=6.1.0",
     "requests>=2.32.3",
-    "sqlalchemy>=2.0.40",
+    "sqlalchemy>=2.0.41",
 ]
 
 [build-system]
@@ -29,8 +27,10 @@ packages = ["src/api"]
 
 [tool.uv]
 index-url = "https://mirrors.aliyun.com/pypi/simple/"
-dev-dependencies = [
-    "ruff>=0.6.2",
-    "fastapi-cli>=0.0.5",
-    "requests>=2.32.3",
+
+[dependency-groups]
+dev = [
+    "fastapi-cli>=0.0.7",
+    "pytest>=8.3.5",
 ]
+
