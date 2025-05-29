@@ -28,15 +28,16 @@ def process_ocr_task(self, task_key: str) -> bool:
 
     try:
         # 1. 从Redis获取并删除任务数据（原子操作）
-        logger.debug(f"尝试从Redis获取任务数据，任务键：{task_key}")
+        
         data = RedisTaskService.get_and_delete_task_data(task_key)
         if not data:
             logger.error(f"任务数据为空，任务键：{task_key}")
             return False
 
         # 2. 解析任务数据（格式：{record_id: [url1, url2, ...]}）
-        logger.debug(f"解析任务数据，任务键：{task_key}")
+        
         task_data = json.loads(data)
+        logger.debug(f"解析任务数据，任务键：{task_key} {task_data}")
         record_id_str, urls = next(iter(task_data.items()))  # 提取记录ID和URL列表
         record_id = int(record_id_str)
         logger.info(f"成功获取OCR任务数据，记录ID：{record_id}，待处理URL数量：{len(urls)}")
@@ -59,7 +60,7 @@ def process_ocr_task(self, task_key: str) -> bool:
             all_url_success = True  # 跟踪所有URL是否处理成功
             for url in urls:
                 try:
-                    logger.debug(f"开始处理URL：{url}，记录ID：{record_id}")
+                    logger.info(f"开始处理URL：{url}，记录ID：{record_id}")
                     # 调用Dify API识别图片内容
                     result = dify_client.send_message(
                         query="分析图片内容",
