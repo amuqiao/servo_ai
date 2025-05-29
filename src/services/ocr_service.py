@@ -122,7 +122,7 @@ class OCRService:
     @staticmethod
     def check_need_ocr(record_id: int, db: Session) -> bool:
         """
-        检查OCR记录是否需要执行识别（ai_status不为1时需要）
+        检查OCR记录是否需要执行识别（ai_status不为1且url有效时需要）
         :param record_id: OCR记录ID
         :param db: 数据库会话对象
         :return: 需要识别返回True，否则返回False
@@ -132,7 +132,15 @@ class OCRService:
         if not ocr_record:
             logger.error(f"未找到OCR记录，记录ID：{record_id}")
             raise ValueError("OCR记录不存在")
-        return ocr_record.ai_status != 1  # ai_status=1时无需处理
+        
+        # 新增：检查url是否为空或NULL（数据库中NULL对应Python的None）
+        url_is_invalid = ocr_record.url is None or ocr_record.url.strip() == ""
+        if url_is_invalid:
+            logger.debug(f"OCR记录URL无效（NULL/空字符串），无需识别，记录ID：{record_id}")
+            return False  # url无效时直接返回不需要识别
+        
+        # 原逻辑：ai_status=1时无需处理，否则需要处理
+        return ocr_record.ai_status != 1
 
     @staticmethod
     def get_ocr_record(record_id: int, db: Session):
