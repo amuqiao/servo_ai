@@ -15,9 +15,9 @@ def get_dify_client() -> DifyClient:
     config = ApiConfig()
     try:
         return DifyClient(
-            base_url=config.DIFY_BASE_URL,
-            api_key=config.DIFY_API_KEY,
-            timeout=config.DIFY_TIMEOUT
+            base_url=config.dify.BASE_URL,  # 修改点：通过dify子配置访问
+            api_key=config.dify.API_KEY,    # 修改点：通过dify子配置访问
+            timeout=config.dify.TIMEOUT     # 修改点：通过dify子配置访问
         )
     except AttributeError as e:
         logger.error(f"Dify配置缺失: {str(e)}")

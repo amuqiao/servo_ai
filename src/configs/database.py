@@ -16,13 +16,14 @@ def get_db_engine():
     """创建带连接池配置的数据库引擎"""
     config = ApiConfig()
     try:
+        # 改为从database子配置获取值
         connection_dict = {
             "drivername": "mysql+pymysql",
-            "username": config.DB_USER,
-            "password": quote_plus(config.DB_PASSWORD),
-            "host": config.DB_HOST,
-            "port": config.DB_PORT,
-            "database": config.DB_NAME
+            "username": config.database.user,  # 原config.DB_USER → config.database.user
+            "password": quote_plus(config.database.password),  # 原config.DB_PASSWORD → config.database.password
+            "host": config.database.host,  # 原config.DB_HOST → config.database.host
+            "port": config.database.port,  # 原config.DB_PORT → config.database.port
+            "database": config.database.db_name  # 原config.DB_NAME → config.database.db_name
         }
         
         logger.info(

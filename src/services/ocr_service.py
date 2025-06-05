@@ -95,28 +95,62 @@ class OCRService:
         return records
 
     @staticmethod
-    def update_ai_result(record_id: int, ai_task_id: str, ai_content: list, ai_status: int, db: Session):  # 新增ai_status参数
+    async def update_ai_status_by_company_ids(company_ids: list[str], db: Session) -> int:
         """
-        更新OCR记录的AI处理结果（支持多URL识别结果列表）
+        根据公司ID列表重置OCR记录的ai_status为0
+        :param company_ids: 公司ID列表
+        :param db: 数据库会话
+        :return: 更新的记录数量
         """
-        logger.info(f"开始更新OCR记录，记录ID：{record_id}，任务ID：{ai_task_id}")
+        if not company_ids:
+            logger.warning("传入的公司ID列表为空，无法更新OCR记录")
+            raise HTTPException(status_code=400, detail="公司ID列表不能为空")
+        
+        # 步骤1：获取公司关联的业务ID
+        business_ids = await OCRService.fetch_business_ids_by_company_ids(company_ids, db)
+        if not business_ids:
+            logger.info("未找到公司ID关联的业务ID")
+            return 0
+        
+        # 步骤2：查询业务ID对应的有效OCR记录
+        records = db.query(OCRModel).filter(
+            OCRModel.business_id.in_(business_ids),
+            OCRModel.is_delete == 0
+        ).all()
+        
+        if not records:
+            logger.info("未找到需要更新的OCR记录")
+            return 0
+        
+        # 步骤3：批量更新ai_status为0
+        for record in records:
+            record.ai_status = 0
+        
+        db.commit()
+        logger.info(f"成功更新{len(records)}条OCR记录的ai_status为0")
+        return len(records)
+
+    @staticmethod
+    def update_ai_result(record_id: int, ai_task_id: str, ai_content: list, ai_status: int, db: Session):
+        """更新OCR记录的AI处理结果（支持多URL识别结果列表）"""
+        logger.info(f"开始更新OCR记录，记录ID：{record_id}")  # 关键更新入口保留
         ocr_record = db.query(OCRModel).filter(OCRModel.id == record_id).first()
         if not ocr_record:
-            logger.error(f"未找到OCR记录，记录ID：{record_id}")
+            logger.error(f"未找到OCR记录，记录ID：{record_id}")  # 关键错误保留
             raise ValueError("OCR记录不存在")
         
         try:
             ocr_record.ai_task_id = ai_task_id
-            ocr_record.ai_status = ai_status  # 使用传入的状态值
+            ocr_record.ai_status = ai_status
             ocr_record.ai_content = json.dumps(ai_content, ensure_ascii=False)
             ocr_record.update_time = datetime.now(pytz.timezone('Asia/Shanghai'))
             db.commit()
             db.refresh(ocr_record)
-            logger.info(f"OCR记录更新成功，记录ID：{record_id}")
+            logger.info(f"OCR记录更新成功，记录ID：{record_id}")  # 关键成功日志保留
             return ocr_record
         except Exception as e:
-            db.rollback()  # 异常时回滚事务
-            logger.error(f"OCR记录更新失败，记录ID：{record_id}，错误详情：{str(e)}", exc_info=True)
+            db.rollback()
+            logger.error(f"OCR记录更新失败（记录ID：{record_id}）：{str(e)}", exc_info=True)  # 关键异常保留
             raise HTTPException(status_code=500, detail=f"记录更新失败：{str(e)}")
 
     @staticmethod
@@ -155,3 +189,80 @@ class OCRService:
         if not ocr_record:
             logger.warning(f"未找到OCR记录，记录ID：{record_id}")
         return ocr_record
+
+    @staticmethod
+    async def fetch_company_ids_by_business_ids(business_ids: list[str], db: Session):
+        """
+        根据业务ID（电站编号）获取关联的公司ID列表
+        :param business_ids: 业务ID列表（对应power_number）
+        :param db: 数据库会话
+        :return: 关联的公司ID列表
+        """
+        if not business_ids:
+            logger.warning("传入的业务ID列表为空，无法查询公司ID")
+            raise HTTPException(status_code=400, detail="业务ID列表不能为空")
+        try:
+            logger.info(f"开始根据业务ID查询公司ID，业务ID数量：{len(business_ids)}")
+            # 关联查询电厂基础表，通过power_number获取company_id
+            results = db.query(PompPowerPlantBasic.company_id).filter(
+                PompPowerPlantBasic.power_number.in_(business_ids)
+            ).all()
+            company_ids = [str(row.company_id) for row in results]  # 转换为字符串与接口类型一致
+            logger.info(f"成功获取{len(company_ids)}个关联公司ID")
+            return company_ids
+        except Exception as e:
+            logger.error(f"业务ID查询公司ID失败，业务ID列表：{business_ids}，错误详情：{str(e)}", exc_info=True)
+            raise HTTPException(status_code=500, detail=f"业务ID查询公司ID失败：{str(e)}")
+
+    @staticmethod
+    async def get_ai_status_statistics(
+        company_ids: list[int] | None = None,
+        province_ids: list[str] | None = None,
+        db: Session = None
+    ) -> dict:
+        """
+        根据公司/省份ID条件统计ai_status分布及电站总数（服务层独立参数）
+        :param company_ids: 公司ID列表（可选）
+        :param province_ids: 省份ID列表（可选）
+        :param db: 数据库会话
+        :return: 统计结果字典
+        """
+        if not company_ids and not province_ids:
+            logger.warning("至少需要提供一个筛选条件（公司ID/省份ID）")
+            raise HTTPException(status_code=400, detail="至少需要提供一个筛选条件")
+
+        logger.info(f"开始OCR状态统计，公司ID：{company_ids}，省份ID：{province_ids}")
+        
+        # 关联OCRModel和PompPowerPlantBasic（business_id = power_number）
+        query = db.query(OCRModel).join(
+            PompPowerPlantBasic,
+            OCRModel.business_id == PompPowerPlantBasic.power_number
+        ).filter(OCRModel.is_delete == 0)  # 仅统计未删除记录
+
+        # 构建筛选条件（仅保留ID筛选）
+        if company_ids:
+            query = query.filter(PompPowerPlantBasic.company_id.in_(company_ids))
+        if province_ids:
+            query = query.filter(PompPowerPlantBasic.province.in_(province_ids))
+
+        # 移除await，同步执行查询（关键修复点）
+        records = db.execute(query)  # 改为同步调用
+        ocr_records = records.scalars().all()
+        
+        status_counts = {
+            -1: 0,
+            0: 0,
+            1: 0
+        }
+        business_ids = set()  # 用于去重统计电站数
+        for record in ocr_records:
+            status = record.ai_status or 0  # 处理ai_status为None的情况，默认归为未处理（0）
+            status_counts[status] += 1
+            business_ids.add(record.business_id)
+
+        return {
+            "ai_status_neg_1_count": status_counts[-1],
+            "ai_status_0_count": status_counts[0],
+            "ai_status_1_count": status_counts[1],
+            "total_power_plants": len(business_ids)
+        }

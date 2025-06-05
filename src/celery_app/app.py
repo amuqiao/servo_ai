@@ -24,6 +24,14 @@ class CeleryConfig(BaseSettings):
     CELERY_TIMEZONE: str = "Asia/Shanghai"
     # 内部时间存储使用 UTC（避免时区转换问题）
     CELERY_ENABLE_UTC: bool = True
+    # 新增：扫描Redis任务的间隔时间（单位：秒，无默认值，必填）
+    CELERY_SCAN_TASKS_INTERVAL: int  # 移除默认值，仅声明类型
+    # 新增：单次扫描最大任务数（防止单次扫描量过大，无默认值，必填）
+    CELERY_SCAN_BATCH_SIZE: int      # 移除默认值，仅声明类型
+    # 新增：连接池大小（默认无连接池，频繁创建连接易断开）
+    CELERY_BROKER_POOL_LIMIT: int  # 无默认值，从环境变量获取
+    # 新增：每个 Worker 预取任务数（根据任务耗时调整）
+    CELERY_WORKER_PREFETCH_MULTIPLIER: int  # 无默认值，从环境变量获取
 
     # 定时任务调度配置（键为任务名称，值为任务详情）
     CELERY_BEAT_SCHEDULE: Dict[str, Any] = {
@@ -39,7 +47,6 @@ class CeleryConfig(BaseSettings):
     }
 
     model_config = SettingsConfigDict(
-        env_prefix="CELERY_",  # 环境变量前缀（如 CELERY_BROKER_URL 对应环境变量）
         env_file=".env",       # 从 .env 文件加载配置
         env_file_encoding="utf-8",
         extra="ignore"         # 忽略未定义的额外环境变量（避免配置污染）
@@ -70,7 +77,12 @@ app.conf.update(
     enable_utc=config.CELERY_ENABLE_UTC,
     beat_schedule=config.CELERY_BEAT_SCHEDULE,
     worker_hijack_root_logger=False,  # 禁止 Celery 覆盖根日志器（保留 FastAPI 日志）
-    worker_redirect_stdouts=False    # 禁止 Celery 重定向标准输出（避免日志混乱）
+    worker_redirect_stdouts=False,    # 禁止 Celery 重定向标准输出（避免日志混乱）
+    # 新增连接池与重试配置
+    broker_pool_limit=config.CELERY_BROKER_POOL_LIMIT,  # 从环境变量获取
+    broker_connection_retry_on_startup=True,  # 启动时自动重试连接 Redis
+    broker_connection_max_retries=10,         # 最大重试次数
+    worker_prefetch_multiplier=config.CELERY_WORKER_PREFETCH_MULTIPLIER,  # 从环境变量获取
 )
 
 # 自动发现任务模块（从 src.celery_app 包中查找 tasks.py 
