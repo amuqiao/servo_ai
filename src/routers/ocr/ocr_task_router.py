@@ -12,14 +12,14 @@ logger = logging.getLogger("celery")
 router = APIRouter(prefix="/api/ocr", tags=["OCR任务处理"])
 
 @router.post("/tasks", response_model=OCRTaskResponse)
-async def create_ocr_tasks(limit: int, db: Session = Depends(get_db_conn)):
+async def create_ocr_tasks(limit: int, ai_status: int | None = None, db: Session = Depends(get_db_conn)):
     """处理OCR任务接口（优化版本，补充业务ID和公司ID）"""
     if limit <= 0:
         logger.warning("接口参数校验失败：limit必须大于0")
         raise HTTPException(status_code=400, detail="请求数量必须大于0")
 
     try:
-        records = await OCRService.fetch_ocr_records(limit, db)
+        records = await OCRService.fetch_ocr_records(limit, db, ai_status=ai_status)
         if not records:
             return OCRTaskResponse(
                 message="没有可处理的记录",
@@ -48,6 +48,7 @@ async def create_ocr_tasks(limit: int, db: Session = Depends(get_db_conn)):
 @router.post("/tasks/by-business-ids", response_model=OCRTaskResponse)
 async def create_ocr_tasks_by_business_ids(
     business_ids: list[str] = Body(..., description="业务ID列表（电站编号）"),
+    ai_status: int | None = None,
     db: Session = Depends(get_db_conn)
 ):
     """根据业务ID处理OCR任务接口（补全关联的公司ID）"""
@@ -55,7 +56,7 @@ async def create_ocr_tasks_by_business_ids(
         # 步骤1：通过业务ID查询关联的公司ID
         company_ids = await OCRService.fetch_company_ids_by_business_ids(business_ids, db)
         # 步骤2：查询待处理OCR记录
-        records = await OCRService.fetch_ocr_records_by_business_ids(business_ids, db)
+        records = await OCRService.fetch_ocr_records_by_business_ids(business_ids, db, ai_status=ai_status)
         
         if not records:
             return OCRTaskResponse(
@@ -85,6 +86,7 @@ async def create_ocr_tasks_by_business_ids(
 @router.post("/tasks/by-company-ids", response_model=OCRTaskResponse)
 async def create_ocr_tasks_by_company_ids(
     company_ids: list[str] = Body(..., description="公司ID列表"),
+    ai_status: int | None = None,
     db: Session = Depends(get_db_conn)
 ):
     """根据公司ID处理OCR任务接口（补全关联的业务ID）"""
@@ -92,7 +94,7 @@ async def create_ocr_tasks_by_company_ids(
         # 步骤1：通过公司ID查询关联的业务ID（电站编号）
         business_ids = await OCRService.fetch_business_ids_by_company_ids(company_ids, db)
         # 步骤2：查询待处理OCR记录
-        records = await OCRService.fetch_ocr_records_by_company_ids(company_ids, db)
+        records = await OCRService.fetch_ocr_records_by_company_ids(company_ids, db, ai_status=ai_status)
         
         if not records:
             return OCRTaskResponse(

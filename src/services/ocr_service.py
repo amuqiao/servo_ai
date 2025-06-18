@@ -12,7 +12,7 @@ logger = logging.getLogger("celery")
 
 class OCRService:
     @staticmethod
-    async def _base_fetch_ocr_records(db: Session, business_ids: list[str] = None, limit: int = None):
+    async def _base_fetch_ocr_records(db: Session, business_ids: list[str] = None, limit: int = None, ai_status: int | None = None):
         """
         基础OCR记录查询方法（抽象公共查询逻辑）
         :param db: 数据库会话
@@ -20,10 +20,13 @@ class OCRService:
         :param limit: 限制数量（可选）
         :return: OCR记录列表
         """
-        # 公共条件：AI状态未完成或为空
-        query = db.query(OCRModel).filter(
-            or_(OCRModel.ai_status != 1, OCRModel.ai_status == None)
-        )
+        # 公共条件：根据ai_status过滤或默认未完成状态
+        if ai_status is not None:
+            query = db.query(OCRModel).filter(OCRModel.ai_status == ai_status)
+        else:
+            query = db.query(OCRModel).filter(
+                or_(OCRModel.ai_status != 1, OCRModel.ai_status == None)
+            )
 
         # 业务ID过滤（可选）
         if business_ids:
@@ -36,17 +39,17 @@ class OCRService:
         return query.all()
 
     @staticmethod
-    async def fetch_ocr_records(limit: int, db: Session):
+    async def fetch_ocr_records(limit: int, db: Session, ai_status: int | None = None):
         """获取指定数量的待处理OCR记录（调用基础查询方法）"""
-        return await OCRService._base_fetch_ocr_records(db, limit=limit)
+        return await OCRService._base_fetch_ocr_records(db, limit=limit, ai_status=ai_status)
 
     @staticmethod
-    async def fetch_ocr_records_by_business_ids(business_ids: list[str], db: Session):
+    async def fetch_ocr_records_by_business_ids(business_ids: list[str], db: Session, ai_status: int | None = None):
         """根据业务ID列表获取待处理OCR记录（调用基础查询方法）"""
         if not business_ids:
             logger.warning("传入的业务ID列表为空，无法查询OCR记录")
             raise HTTPException(status_code=400, detail="业务ID列表不能为空")
-        return await OCRService._base_fetch_ocr_records(db, business_ids=business_ids)
+        return await OCRService._base_fetch_ocr_records(db, business_ids=business_ids, ai_status=ai_status)
 
     @staticmethod
     async def fetch_business_ids_by_company_ids(company_ids: list[str], db: Session):
@@ -73,7 +76,7 @@ class OCRService:
             raise HTTPException(status_code=500, detail=f"公司ID查询失败：{str(e)}")
 
     @staticmethod
-    async def fetch_ocr_records_by_company_ids(company_ids: list[str], db: Session):
+    async def fetch_ocr_records_by_company_ids(company_ids: list[str], db: Session, ai_status: int | None = None):
         """
         根据公司ID列表获取关联的待处理OCR记录（整合公司ID→业务ID→记录的流程）
         :param company_ids: 公司ID列表
@@ -90,8 +93,8 @@ class OCRService:
             logger.info("未找到公司ID关联的业务ID")
             return []
         
-        # 步骤2：根据业务ID获取待处理记录
-        records = await OCRService.fetch_ocr_records_by_business_ids(business_ids, db)
+        # 步骤2：根据业务ID获取待处理记录（带ai_status过滤）
+        records = await OCRService.fetch_ocr_records_by_business_ids(business_ids, db, ai_status=ai_status)
         return records
 
     @staticmethod
