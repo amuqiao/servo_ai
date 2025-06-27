@@ -269,3 +269,23 @@ class OCRService:
             "ai_status_1_count": status_counts[1],
             "total_power_plants": len(business_ids)
         }
+
+    @staticmethod
+    async def fetch_latest_ocr_records(db: Session, business_ids: list[str] = None, ai_status: int | None = None, limit_count: int = 100):
+        """获取最新的100条OCR记录，按创建时间倒序排列"""
+        # 修复文档字符串缺少闭合引号的问题
+        query = db.query(OCRModel)
+        
+        # 添加业务ID过滤条件
+        if business_ids:
+            query = query.filter(OCRModel.business_id.in_(business_ids))
+        
+        # 添加ai_status过滤条件
+        if ai_status is not None:
+            query = query.filter(OCRModel.ai_status == ai_status)
+        else:
+            # 修复OR条件导入问题并添加括号
+            query = query.filter(or_(OCRModel.ai_status != 1, OCRModel.ai_status.is_(None)))
+        
+        # 按创建时间倒序并限制100条
+        return query.order_by(OCRModel.create_time.desc()).limit(limit_count).all()

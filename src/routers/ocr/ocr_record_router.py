@@ -161,3 +161,37 @@ async def get_ocr_status_statistics(
     except Exception as e:
         logger.error(f"OCR状态统计失败，错误详情：{str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="服务器内部错误")
+
+@router.get("/latest", response_model=OCRListResponse)
+async def get_latest_ocr_records(
+    business_ids: list[str] = Query(None, description="业务ID列表（可选）"),
+    ai_status: int | None = Query(None, description="AI处理状态（可选）"),
+    limit_count: int = Query(100, ge=1, le=1000, description="限制返回记录数量，默认100，最大1000"),
+    db: Session = Depends(get_db_conn)
+):
+    """
+    获取最新的OCR记录（按创建时间倒序，最多100条）
+    - 参数：可选的业务ID列表和AI状态筛选条件
+    - 返回：符合条件的OCR记录列表
+    """
+    try:
+        records = await OCRService.fetch_latest_ocr_records(
+            db=db,
+            business_ids=business_ids,
+            ai_status=ai_status,
+            limit_count=limit_count  # 传递limit参数
+        )
+        if not records:
+            return OCRListResponse(
+                message="未找到符合条件的OCR记录",
+                data=OCRListData(records=[], count=0)
+            )
+        # 转换ORM对象为响应模型
+        record_infos = [OCRRecordInfo.model_validate(record) for record in records]
+        return OCRListResponse(
+            message="查询成功",
+            data=OCRListData(records=record_infos, count=len(record_infos))
+        )
+    except Exception as e:
+        logger.error(f"获取最新OCR记录失败: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="服务器内部错误")
