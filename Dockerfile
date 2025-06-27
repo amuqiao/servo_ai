@@ -24,7 +24,9 @@ WORKDIR /app
 # 创建Redis数据目录并设置权限
 RUN mkdir -p /var/lib/redis && \
     mkdir -p /var/log/redis && \
-    chown -R root:root /var/lib/redis /var/log/redis
+    # 新增celery日志目录
+    mkdir -p /var/log/celery && \
+    chown -R root:root /var/lib/redis /var/log/redis /var/log/celery
 
 # 复制Redis配置文件
 COPY redis.conf /etc/redis/redis.conf
@@ -56,6 +58,10 @@ ENV PYTHONPATH="/app/src"
 
 # 验证 uvicorn 安装
 RUN uvicorn --version
+
+# 暴露端口
+EXPOSE 8000
+EXPOSE 5555
 
 # 重置入口点
 ENTRYPOINT []
