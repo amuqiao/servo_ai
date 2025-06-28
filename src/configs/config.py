@@ -36,26 +36,39 @@ class RedisConfig(BaseSettings):
 # Dify配置类（添加 env_prefix 限制只读取 DIFY_ 前缀变量）
 class DifyConfig(BaseSettings):
     """Dify 模块配置（映射.env中DIFY_前缀的环境变量）"""
-    BASE_URL: str = Field(...)  # 自动映射 DIFY_BASE_URL
-    API_KEY: str = Field(...)   # 自动映射 DIFY_API_KEY
-    TIMEOUT: int = Field(default=180)  # 自动映射 DIFY_TIMEOUT
-    OCR_BASE_URL: str = Field(...)  # 自动映射 DIFY_OCR_BASE_URL
+    BASE_URL: str = Field(...)
+    API_KEY: str = Field(...)
+    TIMEOUT: int = Field(default=180)
+    OCR_BASE_URL: str = Field(...)
 
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
-        env_prefix="DIFY_",  # 只读取 DIFY_ 前缀的环境变量
+        env_prefix="DIFY_",
+        extra="ignore",
+    )
+
+# DashScope配置类
+class DashScopeConfig(BaseSettings):
+    """DashScope 模块配置"""
+    BASE_URL: str = Field(...)
+    API_KEY: str = Field(...)
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_prefix="DASHSCOPE_",
         extra="ignore",
     )
 
 class ApiConfig(BaseSettings):
-    """项目全局配置类（整合各模块配置，从.env文件加载环境变量）"""
+    """项目全局配置类"""
     ROOT_DIR: str = Field(default='./', env='ROOT_DIR')
     
-    # 使用 default_factory 动态加载子配置
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)
     redis: RedisConfig = Field(default_factory=RedisConfig)
-    dify: DifyConfig = Field(default_factory=DifyConfig)        
+    dify: DifyConfig = Field(default_factory=DifyConfig)
+    dashscope: DashScopeConfig = Field(default_factory=DashScopeConfig) 
 
     model_config = SettingsConfigDict(
         env_file=".env",

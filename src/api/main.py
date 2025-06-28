@@ -5,6 +5,7 @@ from src.routers.ocr import ocr_record_router, ocr_task_router
 from src.configs import ApiConfig
 from src.configs.logging_config import setup_logging, LogConfig
 from src.celery_app import app as celery_app
+from src.middlewares.exception_handler import add_exception_handlers
 
 import sys
 import os
@@ -16,6 +17,9 @@ logger = logging.getLogger(__name__)
 config = ApiConfig()
 
 app = FastAPI(title="ServoAI_API", version="1.0.0")
+
+# 添加异常处理器
+add_exception_handlers(app)
 
 # 配置日志
 config = LogConfig(LOGGING_LEVEL=logging.INFO)
