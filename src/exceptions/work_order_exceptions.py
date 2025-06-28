@@ -8,6 +8,8 @@ class WorkOrderErrorCode(Enum):
     WORK_ORDER_SUBMIT_FAILED = 50010  # 工单提交失败
     WORK_ORDER_VALIDATE_FAILED = 40010  # 工单验证失败
     WORK_ORDER_NOT_FOUND = 40410  # 工单不存在
+    WORK_ORDER_CALCULATE_FAILED = 50011  # 相似度计算失败
+    WORK_ORDER_FORMAT_ERROR = 40011  # 数据格式错误
 
 class WorkOrderException(HTTPException):
     def __init__(

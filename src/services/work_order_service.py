@@ -108,20 +108,26 @@ class WorkOrderService:
             result = response.choices[0].message.content.strip()
             list_match = re.search(r'\[.*?\]', result, re.DOTALL)
             if not list_match:
-                raise ValueError(f"无法提取列表格式: {result}")
+                raise WorkOrderException(
+                    code=WorkOrderErrorCode.WORK_ORDER_FORMAT_ERROR,
+                    message=f"无法提取列表格式: {result}"
+                )
             clean_result = list_match.group()
             similarity_list = ast.literal_eval(clean_result)
 
             # 验证结果格式
             if not isinstance(similarity_list, list) or not all(isinstance(item, str) for item in similarity_list):
-                raise ValueError(f"结果格式错误: {similarity_list}")
+                raise WorkOrderException(
+                    code=WorkOrderErrorCode.WORK_ORDER_FORMAT_ERROR,
+                    message=f"结果格式错误: {similarity_list}"
+                )
 
             return similarity_list
 
         except Exception as e:
             logger.error(f"相似度计算失败: {str(e)}")
             raise WorkOrderException(
-                code=WorkOrderErrorCode.WORK_ORDER_SUBMIT_FAILED,
+                code=WorkOrderErrorCode.WORK_ORDER_CALCULATE_FAILED,
                 message=f"相似度计算失败: {str(e)}"
             )
 
@@ -174,9 +180,6 @@ class WorkOrderService:
 
         # 构造响应数据
         response_data = WorkOrderService.construct_response_data(work_order, similarity_rates)
-        import json
-        logger.info(f"response_data: {json.dumps(response_data, ensure_ascii=False)}")
-
         logger.info(f"工单相似度计算完成，共{len(similarity_rates)}个建议项")
         return response_data
 
