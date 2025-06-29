@@ -94,8 +94,7 @@ class OCRCertTask(BaseTask):
                 ocr_results.extend(self.pdf_urls_to_ocr_results(pdf_urls))
             if image_urls:
                 ocr_results.extend(self.image_urls_to_ocr_results(image_urls))
-            json_str = json.dumps(ocr_results, ensure_ascii=False)
-            logger.info(f"OCRCertTask识别结果: {json_str}")
+            
             # 新增：验证OCR结果是否包含错误
             has_error = False
             for result in ocr_results:
