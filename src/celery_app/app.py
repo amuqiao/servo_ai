@@ -47,6 +47,7 @@ class CeleryConfig(BaseSettings):
     CELERY_FETCH_TASKS_ENABLED: bool
     CELERY_FETCH_TASKS_INTERVAL: int  # 任务执行间隔(秒)
     CELERY_FETCH_TASKS_LIMIT: int    # 任务数量限制
+    CELERY_FETCH_TASKS_AI_STATUS: int  # AI状态筛选值
 
     # 定时任务调度配置（键为任务名称，值为任务详情）
     CELERY_BEAT_SCHEDULE: Dict[str, Any] = {

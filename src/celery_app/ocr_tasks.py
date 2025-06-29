@@ -179,8 +179,13 @@ def fetch_and_publish_latest_ocr_tasks(self, limit_count: int = 100):
             raise
 
         # 将异步调用包装在asyncio.run()中
-        records = asyncio.run(OCRService.fetch_latest_ocr_records(
-            db=db, limit_count=limit_count))
+        config = CeleryConfig()
+        ai_status = config.CELERY_FETCH_TASKS_AI_STATUS
+        # 将-2转换为None，表示不筛选ai_status
+        if ai_status == -2:
+            ai_status = None
+        records = asyncio.run(OCRService.fetch_ocr_records(
+            db=db, limit=limit_count, ai_status=ai_status))
         if not records:
             logger.info("未找到需要处理的OCR记录")
             return True
