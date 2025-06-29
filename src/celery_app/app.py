@@ -1,4 +1,3 @@
-import os
 from celery import Celery
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Dict, Any
@@ -36,14 +35,9 @@ class CeleryConfig(BaseSettings):
     CELERY_TASK_QUEUES_MAX_LENGTH: int = 5  # 队列最大长度（需配合Broker配置生效）
     CELERY_TASK_TIME_LIMIT: int = 300  # 单个任务最大执行时间（秒）
 
-    # old
-    CELERY_SCAN_TASKS_INTERVAL: int  # 移除默认值，仅声明类型
-    # 新增：单次扫描最大任务数（防止单次扫描量过大，无默认值，必填）
-    CELERY_SCAN_BATCH_SIZE: int     # 移除默认值，仅声明类型
     # 新增：连接池大小（默认无连接池，频繁创建连接易断开）
     CELERY_BROKER_POOL_LIMIT: int  # 无默认值，从环境变量获取
-    # 新增：定时任务开关配置
-    CELERY_SCAN_TASKS_ENABLED: bool
+
     CELERY_FETCH_TASKS_ENABLED: bool
     CELERY_FETCH_TASKS_INTERVAL: int  # 任务执行间隔(秒)
     CELERY_FETCH_TASKS_LIMIT: int    # 任务数量限制

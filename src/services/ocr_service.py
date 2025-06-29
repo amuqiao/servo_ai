@@ -1,11 +1,11 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
-from src.models import OCRModel, PompPowerPlantBasic  # 导入OCR模型和关联的电厂基础信息模型
+from src.models import OCRModel, PompPowerPlantBasic  
 import logging
 from datetime import datetime
 import pytz
 import json
-from fastapi import HTTPException  # 补充缺失的HTTPException导入
+from fastapi import HTTPException  
 
 # 配置日志记录器，指定为celery服务使用
 logger = logging.getLogger("celery")

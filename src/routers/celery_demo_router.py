@@ -4,7 +4,7 @@ from src.configs.redis_config import get_redis_client
 from src.celery_app.app import CeleryConfig
 from src.services.redis_service import RedisBaseService
 from src.schemas.response_schema import SuccessResponse, ErrorResponse
-from src.schemas.celery_schema import DemoTaskRequest, BatchDemoTaskRequest,GenerateTasksRequest  # 新增Pydantic模型
+from src.schemas.celery_schema import DemoTaskRequest, BatchDemoTaskRequest,GenerateTasksRequest 
 import uuid
 import json  # 新增JSON模块导入
 from src.services.task_service import TaskService

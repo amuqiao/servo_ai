@@ -1,20 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
-from sqlalchemy.orm import Session
-from src.configs.database import get_db_conn
-from src.services.ocr_service import OCRService
 from src.services.task_service import TaskService
-from src.models.ocr_model import OCRModel
 from redis import Redis
 from src.configs.redis_config import get_redis_client
 
-from src.schemas.response_schema import BaseResponse
-from src.schemas.ocr_task_schemas import OCRTaskResponse, OCRTaskData, CreateTasksRequest
 from sqlalchemy.orm import Session
-from src.configs import ApiConfig
-import logging
 from src.configs.database import get_db_conn
 from src.services.ocr_service import OCRService
-from src.services.redis_task_service import RedisTaskService
+from src.schemas.ocr_task_schemas import OCRTaskResponse, OCRTaskData
+from src.configs import ApiConfig
+import logging
 
 logger = logging.getLogger("celery")
 router = APIRouter(prefix="/api/ocr", tags=["OCR任务处理"])

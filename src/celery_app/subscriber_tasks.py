@@ -1,6 +1,5 @@
 import redis
 import json
-import time
 import logging
 from src.celery_app import app
 from src.configs.redis_config import get_redis_client

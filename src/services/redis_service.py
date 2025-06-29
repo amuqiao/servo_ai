@@ -62,7 +62,6 @@ class RedisBaseService:
     @staticmethod
     def scan_keys(redis_client: Redis, match_pattern: str = "*", count: int = 100) -> list[str]:
         """
-        通用扫描键方法（替代原RedisTaskService的scan_ocr_tasks）
         :param redis_client: Redis客户端实例
         :param match_pattern: 匹配模式（如"demo_task_*"）
         :param count: 每次扫描的最大返回数
@@ -88,7 +87,6 @@ class RedisBaseService:
     @staticmethod
     def get_and_delete_key(redis_client: Redis, key: str) -> str:
         """
-        原子操作：获取并删除键（替代原RedisTaskService的get_and_delete_task_data）
         :param redis_client: Redis客户端实例
         :param key: 目标键
         :return: 键对应的值（字符串形式，无值返回空字符串）
