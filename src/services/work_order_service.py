@@ -4,10 +4,10 @@ import logging
 import re
 import ast
 import time
-from functools import lru_cache
-from openai import OpenAI, Timeout
 from typing import Dict, List, Any
 from src.configs.config import ApiConfig
+from openai import AsyncOpenAI, Timeout  # 导入异步客户端
+from aiocache import cached  # 导入异步缓存
 
 logger = logging.getLogger(__name__)
 
@@ -40,23 +40,16 @@ class WorkOrderService:
             "orderAdvices": order_advices
         }
 
-        logger.info(f"成功提取并组合工单数据，content: {work_order.content[:50]}, orderAdvices数量: {len(order_advices)}")
+        logger.info(f"成功提取并组合工单数据，orderAdvices数量: {len(order_advices)}")
         return combined_data
-
+    
     @staticmethod
-    @lru_cache(maxsize=128)
-    def calculate_similarity(content: str, order_advices: tuple) -> List[str]:
-        """
-        计算content与orderAdvices中每个元素的文本相似度
-        :param content: 工单内容文本
-        :param order_advices: 建议文本元组（需可哈希）
-        :return: 相似度百分比列表（如["20%", "80%"]）
-        """
-        # 验证输入数据完整性
+    @cached(ttl=3600)  # 异步缓存替代lru_cache
+    async def calculate_similarity(content: str, order_advices: tuple) -> List[str]:
+        """异步计算文本相似度"""
         if not content or not order_advices:
             raise ValueError("content和order_advices不能为空")
 
-        # 构建严格格式化的提示词
         prompt = f"""
         任务：计算文本相似度并返回百分比列表
         1. 比较内容："{content}"
@@ -68,25 +61,26 @@ class WorkOrderService:
         """
 
         try:
-            # 初始化大模型客户端（使用兼容OpenAI格式的DashScope接口）
             config = ApiConfig()
-            api_key=config.dashscope.API_KEY
+            api_key = config.dashscope.API_KEY
             if not api_key:
-                logger.error("未配置DASHSCOPE_API_KEY环境变量")
                 raise WorkOrderException(
                     code=WorkOrderErrorCode.WORK_ORDER_SUBMIT_FAILED,
                     message="相似度计算服务未配置"
                 )
 
-            client = OpenAI(
+            # 使用异步客户端
+            client = AsyncOpenAI(
                 api_key=api_key,
                 base_url=config.dashscope.BASE_URL,
             )
 
-            # 调用大模型（使用qwen-turbo模型，添加超时控制）
             start_time = time.time()
             try:
-                response = client.chat.completions.create(
+                
+                
+                # 异步调用API
+                response = await client.chat.completions.create(
                     model="qwen-turbo",
                     messages=[
                         {"role": "system", "content": "你是严格的格式生成器，仅返回符合JSON格式的列表，不添加任何额外文字。"},
@@ -94,7 +88,7 @@ class WorkOrderService:
                     ],
                     temperature=0.0,
                     max_tokens=200,
-                    timeout=20  # 10秒超时
+                    timeout=20
                 )
                 logger.info(f"相似度计算成功，耗时{time.time() - start_time:.2f}秒")
             except Timeout:
@@ -165,19 +159,15 @@ class WorkOrderService:
         }
 
     @staticmethod
-    def submit_work_order(work_order: WorkOrderRequest) -> Dict[str, Any]:
-        """提交工单并返回处理后的数据"""
-        # 提取并组合数据
+    async def submit_work_order(work_order: WorkOrderRequest) -> Dict[str, Any]:
+        """异步提交工单处理"""
         combined_data = WorkOrderService.extract_content_and_advice(work_order)
-
-        # 计算相似度（将列表转换为元组以支持缓存）
-        similarity_rates = WorkOrderService.calculate_similarity(
+        # 异步调用相似度计算
+        similarity_rates = await WorkOrderService.calculate_similarity(
             content=combined_data["content"],
             order_advices=tuple(combined_data["orderAdvices"])
         )
 
-        # 构造响应数据
         response_data = WorkOrderService.construct_response_data(work_order, similarity_rates)
-        logger.info(f"工单相似度计算完成，共{len(similarity_rates)}个建议项")
         return response_data
 
