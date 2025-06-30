@@ -47,53 +47,6 @@ wheels = [
 ]
 
 [[package]]
-name = "api"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "aiocache" },
-    { name = "celery" },
-    { name = "fastapi", extra = ["standard"] },
-    { name = "flower" },
-    { name = "openai" },
-    { name = "pydantic-settings" },
-    { name = "pymupdf" },
-    { name = "pymysql" },
-    { name = "pytz" },
-    { name = "redis" },
-    { name = "requests" },
-    { name = "sqlalchemy" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "fastapi-cli" },
-    { name = "pytest" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "aiocache", specifier = ">=0.12.3" },
-    { name = "celery", specifier = ">=5.5.2" },
-    { name = "fastapi", extras = ["standard"], specifier = ">=0.112.2" },
-    { name = "flower", specifier = ">=2.0.1" },
-    { name = "openai", specifier = ">=1.92.2" },
-    { name = "pydantic-settings", specifier = ">=2.9.1" },
-    { name = "pymupdf", specifier = ">=1.26.1" },
-    { name = "pymysql", specifier = ">=1.1.1" },
-    { name = "pytz", specifier = ">=2025.2" },
-    { name = "redis", specifier = ">=6.1.0" },
-    { name = "requests", specifier = ">=2.32.3" },
-    { name = "sqlalchemy", specifier = ">=2.0.41" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "fastapi-cli", specifier = ">=0.0.7" },
-    { name = "pytest", specifier = ">=8.3.5" },
-]
-
-[[package]]
 name = "billiard"
 version = "4.2.1"
 source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
@@ -746,6 +699,53 @@ dependencies = [
 sdist = { url = "https://mirrors.aliyun.com/pypi/packages/f6/31/b6d055f291a660a7bcaec4bcc9457b9fef8ecb6293e527b1eef1840aefd4/rich_toolkit-0.14.6.tar.gz", hash = "sha256:9dbd40e83414b84e828bf899115fff8877ce5951b73175f44db142902f07645d" }
 wheels = [
     { url = "https://mirrors.aliyun.com/pypi/packages/2e/3c/7a824c0514e87c61000583ac22c8321da6dc8e58a93d5f56e583482a2ee0/rich_toolkit-0.14.6-py3-none-any.whl", hash = "sha256:764f3a5f9e4b539ce805596863299e8982599514906dc5e3ccc2d390ef74c301" },
+]
+
+[[package]]
+name = "servo-ai"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "aiocache" },
+    { name = "celery" },
+    { name = "fastapi", extra = ["standard"] },
+    { name = "flower" },
+    { name = "openai" },
+    { name = "pydantic-settings" },
+    { name = "pymupdf" },
+    { name = "pymysql" },
+    { name = "pytz" },
+    { name = "redis" },
+    { name = "requests" },
+    { name = "sqlalchemy" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "fastapi-cli" },
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aiocache", specifier = ">=0.12.3" },
+    { name = "celery", specifier = ">=5.5.2" },
+    { name = "fastapi", extras = ["standard"], specifier = ">=0.112.2" },
+    { name = "flower", specifier = ">=2.0.1" },
+    { name = "openai", specifier = ">=1.92.2" },
+    { name = "pydantic-settings", specifier = ">=2.9.1" },
+    { name = "pymupdf", specifier = ">=1.26.1" },
+    { name = "pymysql", specifier = ">=1.1.1" },
+    { name = "pytz", specifier = ">=2025.2" },
+    { name = "redis", specifier = ">=6.1.0" },
+    { name = "requests", specifier = ">=2.32.3" },
+    { name = "sqlalchemy", specifier = ">=2.0.41" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "fastapi-cli", specifier = ">=0.0.7" },
+    { name = "pytest", specifier = ">=8.3.5" },
 ]
 
 [[package]]
