@@ -160,7 +160,6 @@ class WorkOrderService:
         # 构造完整响应数据
         return {
             'repeatRate': max_similarity,
-            'message': work_order.message,
             'content': work_order.content,
             'onTheWayWorkOrderList': on_the_way_list
         }

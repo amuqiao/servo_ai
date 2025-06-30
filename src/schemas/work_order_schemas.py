@@ -16,12 +16,10 @@ class WorkOrderResult(BaseModel):
     """工单处理结果模型"""
     content: str
     repeatRate: float
-    message: str
     onTheWayWorkOrderList: List[OnTheWayWorkOrder]
 
 class WorkOrderRequest(BaseModel):
-    repeatRate: float = Field(..., example=0.5)  # 修改为float类型，示例值更新为0.5
-    message: str = Field(..., example="相似度 50%")
+    repeatRate: float = Field(None, example=0.5)  # 修改为非必填项
     content: str = Field(..., example="设备故障")
     onTheWayWorkOrderList: List[OnTheWayWorkOrder] = Field(..., min_items=2, example=[
         {
