@@ -16,7 +16,7 @@ import logging
 logger = logging.getLogger(__name__)
 config = ApiConfig()
 
-app = FastAPI(title="ServoAI_API", version="1.0.0")
+app = FastAPI(title="ServoAI", version="1.0.0")
 
 # 添加异常处理器
 add_exception_handlers(app)
