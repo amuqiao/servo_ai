@@ -51,4 +51,12 @@ docker logs -f servo_ai_api
 uv pip compile --output-file requirements.txt pyproject.toml
 ```
 
-##
+
+## 发版规则
+```
+# 创建带注释的标签
+git tag -a v1.0.0 -m "Release version 1.0.0"
+
+# 查看已创建的标签
+git tag
+```
