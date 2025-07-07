@@ -44,6 +44,7 @@ class WorkOrderService:
         return combined_data
     
     @staticmethod
+    @cached(ttl=3600)
     async def calculate_similarity(content: str, order_advices: tuple) -> List[str]:
         """异步计算文本相似度"""
         if not content or not order_advices:
