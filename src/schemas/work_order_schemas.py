@@ -21,7 +21,7 @@ class WorkOrderResult(BaseModel):
 class WorkOrderRequest(BaseModel):
     repeatRate: float = Field(None, example=0.5)  # 修改为非必填项
     content: str = Field(..., example="设备故障")
-    onTheWayWorkOrderList: List[OnTheWayWorkOrder] = Field(..., min_items=2, example=[
+    onTheWayWorkOrderList: List[OnTheWayWorkOrder] = Field(..., min_items=1, example=[
         {
             "id": "12345",
             "taskId": "T001",
