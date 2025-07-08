@@ -43,13 +43,14 @@ def fetch_and_publish_latest_ocr_tasks(self, limit_count: int = 100):
         logger.info(f"开始获取最新OCR记录，限制数量：{limit_count}")
 
         try:
-            # 获取数据库连接
-            db = next(get_db_conn())
-            # 获取Redis客户端，从生成器中获取实际客户端实例
+            # 获取数据库连接生成器
+            db_generator = get_db_conn()
+            db = next(db_generator)
+            # 获取Redis客户端生成器
             redis_generator = get_redis_client()
             redis_client = next(redis_generator)
         except StopIteration:
-            logger.error("无法获取数据库连接")
+            logger.error("无法获取数据库或Redis连接")
             raise
 
         # 将异步调用包装在asyncio.run()中
@@ -90,3 +91,14 @@ def fetch_and_publish_latest_ocr_tasks(self, limit_count: int = 100):
     except Exception as e:
         logger.error(f"获取并发布OCR任务失败: {str(e)}", exc_info=True)
         self.retry(exc=e)
+    finally:
+        # 确保数据库连接生成器完成以释放连接
+        try:
+            next(db_generator)
+        except StopIteration:
+            pass
+        # 确保Redis连接生成器完成以释放连接
+        try:
+            next(redis_generator)
+        except StopIteration:
+            pass

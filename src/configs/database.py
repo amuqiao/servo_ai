@@ -47,7 +47,6 @@ def get_db_engine():
         connection_url = URL.create(**connection_dict)
         return create_engine(
             connection_url, 
-            pool_pre_ping=True,
             echo=False,
             **pool_config
         )
