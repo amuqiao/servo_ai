@@ -9,6 +9,10 @@ class DatabaseConfig(BaseSettings):
     user: str = Field("root")   # 自动映射 DB_USER
     password: str = Field(...)  # 自动映射 DB_PASSWORD（无默认值，必须存在）
     db_name: str = Field(...)   # 自动映射 DB_NAME
+    pool_size: int = Field(10)  # 自动映射 DB_POOL_SIZE
+    max_overflow: int = Field(5)  # 自动映射 DB_MAX_OVERFLOW
+    pool_timeout: int = Field(30)  # 自动映射 DB_POOL_TIMEOUT
+    pool_recycle: int = Field(300)  # 自动映射 DB_POOL_RECYCLE
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -37,10 +37,11 @@ def get_db_engine():
 
         # 添加连接池配置
         pool_config = {
-            "pool_size": 10,          # 连接池保持的连接数
-            "max_overflow": 5,        # 允许临时增加的连接数
-            "pool_timeout": 30,       # 获取连接的超时时间（秒）
-            "pool_recycle": 3600      # 连接重置周期（秒）
+            "pool_size": config.database.pool_size,          # 连接池保持的连接数
+            "max_overflow": config.database.max_overflow,        # 允许临时增加的连接数
+            "pool_timeout": config.database.pool_timeout,       # 获取连接的超时时间（秒）
+            "pool_recycle": config.database.pool_recycle,      # 连接重置周期（秒）
+            "pool_pre_ping": True,  # 已配置，保持连接活性检测
         }
         
         connection_url = URL.create(**connection_dict)
