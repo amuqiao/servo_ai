@@ -4,6 +4,7 @@ import base64
 from openai import OpenAI
 from typing import Union, IO, Dict, Any, List
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from src.configs import ApiConfig
 
 class OCRCertInfoExtractor:
     """
@@ -11,8 +12,8 @@ class OCRCertInfoExtractor:
     """
     
     def __init__(self, 
-                 api_key: str = os.getenv("DASHSCOPE_API_KEY", "sk-9ec27f85396f41788a441841e6d4a718"),
-                 base_url: str = "https://dashscope.aliyuncs.com/compatible-mode/v1",
+                 api_key: str = None,
+                 base_url: str = None,
                  model: str = "qwen-vl-ocr-latest",
                  prompt_config_path: str = "prompts/cert_ocr_prompt.json",
                  prompt_key: str = "prompt",
@@ -27,12 +28,13 @@ class OCRCertInfoExtractor:
         :param prompt_key: 提示词在配置文件中的键名
         :param max_workers: 线程池最大工作线程数
         """
-        self.api_key = api_key
-        self.base_url = base_url
+        config = ApiConfig()
+        self.api_key = api_key or config.dashscope.API_KEY
+        self.base_url = base_url or config.dashscope.BASE_URL
         self.model = model
         self.prompt_config_path = prompt_config_path
         self.prompt_key = prompt_key
-        self.client = OpenAI(api_key=api_key, base_url=base_url)
+        self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
         self.prompt = self._load_prompt()
         self.max_workers = max_workers
     
