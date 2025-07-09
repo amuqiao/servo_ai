@@ -10,6 +10,7 @@ from src.schemas.response_schema import ErrorResponse
 from src.exceptions.user_exceptions import UserException
 from src.exceptions.redis_exceptions import RedisException
 from src.exceptions.work_order_exceptions import WorkOrderException 
+from src.exceptions.taxpayer_cert_exceptions import TaxpayerCertException
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,8 @@ def generic_exception_handler(exc_type: Type[Exception]):
 EXCEPTION_HANDLERS_MAP: Dict[Type[Exception], Any] = {
     UserException: generic_exception_handler(UserException),
     RedisException: generic_exception_handler(RedisException),
-    WorkOrderException: generic_exception_handler(WorkOrderException),  # 新增
+    WorkOrderException: generic_exception_handler(WorkOrderException),  
+    TaxpayerCertException: generic_exception_handler(TaxpayerCertException),  
 }
 
 

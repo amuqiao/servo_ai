@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from src.routers import router
-from src.routers import health_check, task_router, vlm_ocr_router, user_router, power_plant, work_order_router, celery_demo_router
+from src.routers import health_check, task_router, vlm_ocr_router, user_router, power_plant, work_order_router, celery_demo_router, taxpayer_cert_router
 from src.routers.ocr import ocr_record_router, ocr_task_router
 from src.routers import timeseries_router
 from src.configs import ApiConfig
@@ -39,6 +39,7 @@ app.include_router(power_plant.router)
 app.include_router(work_order_router.router)
 app.include_router(celery_demo_router.router)
 app.include_router(timeseries_router.router)
+app.include_router(taxpayer_cert_router.router)
 
 
 @app.get("/")
