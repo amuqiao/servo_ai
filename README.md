@@ -13,7 +13,7 @@
 Servo AI 是一个基于FastAPI和Celery的后端服务项目，提供光伏电站运维工单处理、OCR识别等功能。
 
 ## 环境要求
-- Python 3.8+ 
+- Python 3.12.0 
 - Redis 6.0+ 
 - Docker (可选，用于容器化部署)
 
@@ -90,16 +90,27 @@ celery -A src.celery_app:app flower --port=5555
 ```bash
 # 指定版本号，默认为v1.0.x
 docker build -t servo_ai_api:v1.0.x .
+
+# 或构建最新版本
+docker build -t servo_ai_api:latest .
 ```
 
 ### 2. 启动容器
 ```bash
-docker run -p 8000:8000 servo_ai_api:1.0.x supervisord -n -c /etc/supervisor/conf.d/supervisord.conf
+# 使用supervisord启动完整服务栈
+docker run -p 8000:8000 -p 5555:5555 servo_ai_api:latest supervisord -n -c /etc/supervisor/conf.d/supervisord.conf
+
+# 或仅启动FastAPI应用
+docker run -p 8000:8000 servo_ai_api:latest uvicorn src.api.main:app --host 0.0.0.0
 ```
 
 ### 3. 查看容器日志
 ```bash
+# 查看完整服务栈日志
 docker logs -f servo_ai_api
+
+# 或查看特定容器日志（替换容器ID）
+docker logs -f <container_id>
 ```
 
 ## API文档
@@ -133,11 +144,12 @@ git tag
 ```
 
 ## 常见问题
-- **Q: 服务启动后无法访问？**
-  A: 检查端口是否被占用，尝试更换端口或关闭占用进程
 
-- **Q: Redis连接失败？**
-  A: 确认Redis服务已启动，检查配置文件中的Redis连接参数
+### Q: 服务启动后无法访问？
+A: 检查端口是否被占用，尝试更换端口或关闭占用进程
 
-- **Q: 依赖安装失败？**
-  A: 尝试更新UV版本：`uv self-update`，或删除`uv.lock`后重新同步依赖
+### Q: Redis连接失败？
+A: 确认Redis服务已启动，检查配置文件中的Redis连接参数
+
+### Q: 依赖安装失败？
+A: 尝试更新UV版本：`uv self-update`，或删除`uv.lock`后重新同步依赖
