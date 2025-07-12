@@ -2,33 +2,28 @@ import logging
 import re
 import ast
 import time
+import os
 from typing import Dict, Any
 from src.schemas.taxpayer_cert_schemas import TaxpayerCertResult
 from src.configs.config import ApiConfig
 from openai import AsyncOpenAI, Timeout
 from src.exceptions.taxpayer_cert_exceptions import TaxpayerCertException, TaxpayerCertErrorCode
+from src.tools.prompt_loader import PromptLoader
 
 logger = logging.getLogger(__name__)
 
 class TaxpayerCertService:
-    @staticmethod
-    async def recognize_taxpayer_cert(url: str) -> TaxpayerCertResult:
+    def __init__(self, prompt_filename: str = 'taxpayer_cert_ocr_prompt.txt'):
+        self.prompt_filename = prompt_filename
+        self.prompt_loader = PromptLoader()
+
+    async def recognize_taxpayer_cert(self, url: str) -> TaxpayerCertResult:
         """纳税人证明OCR识别服务"""
         logger.info(f"开始处理纳税人证明图片: {url}")
         
-        # 加载OCR提示词
-        prompt = """
-        请从这张企业税务信息界面截图中，提取公司名称、小规模纳税人标识（这里是‘小规模纳税人’文字本身）、统一社会信用代码，
-        将这些信息整理成JSON格式返回，JSON结构包含'companyName'（对应公司名称）、'taxpayerType'（对应小规模纳税人）、
-        'creditCode'（对应统一社会信用代码）三个字段。
-        示例预期返回（基于图中内容）：
-        {
-        "companyName": "重庆足鑫光伏科技有限公司",
-        "taxpayerType": "小规模纳税人",
-        "creditCode": "91500111MADAFDA278"
-        }
-        """.strip()
-        
+        # 使用提示词加载器加载提示词
+        prompt = self.prompt_loader.load_prompt(self.prompt_filename, file_type='txt')
+
         try:
             config = ApiConfig()
             api_key = config.dashscope.API_KEY
