@@ -24,6 +24,7 @@ Servo AI 是一个基于FastAPI和Celery的后端服务项目，提供光伏电�
 ```bash
 # 克隆项目仓库后进入目录
 cd servo_ai
+cp .env_example .env
 ```
 
 ### 2. 安装UV虚拟环境管理工具
