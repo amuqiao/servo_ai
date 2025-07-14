@@ -1,10 +1,13 @@
 import os
+from pathlib import Path
 import json
 import base64
 from openai import OpenAI
 from typing import Union, IO, Dict, Any, List
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from src.configs import ApiConfig
+from src.tools.prompt_loader import PromptLoader
+from src.exceptions.prompt_loader_exceptions import PromptLoaderException
 
 class OCRCertInfoExtractor:
     """
@@ -15,8 +18,7 @@ class OCRCertInfoExtractor:
                  api_key: str = None,
                  base_url: str = None,
                  model: str = "qwen-vl-ocr-latest",
-                 prompt_config_path: str = "prompts/cert_ocr_prompt.json",
-                 prompt_key: str = "prompt",
+                 prompt_filename: str = "cert_ocr_prompt.json",
                  max_workers: int = 5):
         """
         初始化OCR提取器
@@ -32,22 +34,16 @@ class OCRCertInfoExtractor:
         self.api_key = api_key or config.dashscope.API_KEY
         self.base_url = base_url or config.dashscope.BASE_URL
         self.model = model
-        self.prompt_config_path = prompt_config_path
-        self.prompt_key = prompt_key
+        self.prompt_filename = prompt_filename
+        self.prompt_loader = PromptLoader()
         self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
-        self.prompt = self._load_prompt()
+        try:
+            self.prompt = self.prompt_loader.load_prompt(self.prompt_filename, file_type='json')
+        except PromptLoaderException as e:
+            raise RuntimeError(f"提示词加载失败: {str(e)}") from e
         self.max_workers = max_workers
     
-    def _load_prompt(self) -> str:
-        """加载并验证提示词配置"""
-        full_prompt_path = os.path.join(os.path.dirname(__file__), self.prompt_config_path)
-        if not os.path.exists(full_prompt_path):
-            raise FileNotFoundError(f"提示词配置文件不存在: {full_prompt_path}")
-        with open(full_prompt_path, 'r', encoding='utf-8') as f:
-            prompt_config = json.load(f)
-            if self.prompt_key not in prompt_config:
-                raise KeyError(f"配置文件{full_prompt_path}中未找到key: {self.prompt_key}")
-            return prompt_config[self.prompt_key]
+
     
     def _encode_image(self, image_source: Union[str, IO]) -> str:
         """
@@ -195,8 +191,8 @@ if __name__ == "__main__":
 
     # 文件路径列表测试用例
     test_file_paths = [
-        "/Users/wangqiao/Downloads/github_project/servo_ai_project/servo_ai/servo_ai_api/src/tools/test.jpg",  
-        "/Users/wangqiao/Downloads/github_project/servo_ai_project/servo_ai/servo_ai_api/src/tools/test.jpg"   
+        Path(__file__).parent.joinpath("test_file/test.jpg").resolve().as_posix(),
+        Path(__file__).parent.joinpath("test_file/test.jpg").resolve().as_posix()
     ]
     try:
         file_path_results = extractor.from_files(image_sources=test_file_paths)

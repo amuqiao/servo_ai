@@ -11,7 +11,7 @@ class PromptLoader:
         'json': '_load_json_prompt'
     }
 
-    def __init__(self, root_dir: str = str(Path(__file__).parent.joinpath('prompts').resolve())):
+    def __init__(self, root_dir: str = str(Path(__file__).parent.parent.joinpath('prompts').resolve())):
         """
         初始化提示词加载器
         :param root_dir: 提示词根目录绝对路径
