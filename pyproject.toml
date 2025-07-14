@@ -37,5 +37,6 @@ index-url = "https://mirrors.aliyun.com/pypi/simple/"
 dev = [
     "fastapi-cli>=0.0.7",
     "pytest>=8.3.5",
+    "pytest-cov==6.2.1",
 ]
 

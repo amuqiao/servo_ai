@@ -13,3 +13,5 @@ celerybeat-schedule*
 .github/workflows/*
 .dockerignore
 .vscode/
+.coverage
+htmlcov/

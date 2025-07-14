@@ -7,6 +7,7 @@
 - [Docker部署](#docker部署)
 - [API文档](#api文档)
 - [开发指南](#开发指南)
+- [单元测试](#单元测试)
 - [常见问题](#常见问题)
 
 ## 项目简介
@@ -143,6 +144,30 @@ git push origin v1.0.0
 git tag
 ```
 
+## 单元测试
+
+### 运行测试
+```bash
+# 运行特定测试文件
+pytest tests/test_tools/test_prompt_loader.py -v --cov=src.tools --cov-report=term --cov-report=html
+
+# 运行所有测试
+pytest tests/ -v --cov=src --cov-report=term --cov-report=html
+```
+
+### 测试报告
+测试覆盖率报告在`htmlcov/`目录下，可使用浏览器查看：
+```bash
+# 在macOS上打开报告
+open htmlcov/index.html
+
+# 在Linux上打开报告
+xdg-open htmlcov/index.html
+
+# 在Windows上打开报告
+start htmlcov/index.html
+```
+
 ## 常见问题
 
 ### Q: 服务启动后无法访问？
@@ -153,3 +178,6 @@ A: 确认Redis服务已启动，检查配置文件中的Redis连接参数
 
 ### Q: 依赖安装失败？
 A: 尝试更新UV版本：`uv self-update`，或删除`uv.lock`后重新同步依赖
+
+### Q: 测试覆盖率报告如何查看？
+ A: 运行测试命令后，在项目根目录会生成`htmlcov`文件夹，打开其中的`index.html`文件即可查看详细报告。
